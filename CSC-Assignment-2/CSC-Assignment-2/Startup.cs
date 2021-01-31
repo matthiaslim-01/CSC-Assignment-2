@@ -1,3 +1,4 @@
+using CSC_Assignment_2.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -23,7 +24,18 @@ namespace CSC_Assignment_2
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<StripeOptions>(options =>
+            {
+                options.PublishableKey = Configuration["STRIPE_PUBLISHABLE_KEY"];
+                options.SecretKey = Configuration["STRIPE_SECRET_KEY"];
+                options.WebhookSecret = Configuration["STRIPE_WEBHOOK_SECRET"];
+                options.PaidUser = Configuration["PRO_PRICE_ID"];
+                options.FreeUser = Configuration["BASIC_PRICE_ID"];
+                options.Domain = Configuration["DOMAIN"];
+            });
+
             services.AddControllersWithViews();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -40,7 +52,9 @@ namespace CSC_Assignment_2
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
+
+            //app.UseStaticFiles();
+            app.UseFileServer();
 
             app.UseRouting();
 
