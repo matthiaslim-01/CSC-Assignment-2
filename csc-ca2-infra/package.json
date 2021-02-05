@@ -1,0 +1,9 @@
+{
+  "name": "csc-ca2-infra",
+  "description": "",
+  "version": "0.1.0",
+  "dependencies": {},
+  "devDependencies": {
+    "serverless-layers": "^2.3.3"
+  }
+}

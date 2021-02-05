@@ -1,0 +1,160 @@
+service: csc-ca2-infra
+
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: python3.8
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    shouldStartNameWithService: true
+  role:
+    Fn::GetAtt:
+      - LambdaRole
+      - Arn
+# you can add statements to the Lambda function's IAM Role here
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:ListBucket"
+#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:PutObject"
+#      Resource:
+#        Fn::Join:
+#          - ""
+#          - - "arn:aws:s3:::"
+#            - "Ref" : "ServerlessDeploymentBucket"
+#            - "/*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
+# you can add packaging information here
+#package:
+#  include:
+#    - include-me.py
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.py
+#    - exclude-me-dir/**
+
+functions:
+  backend:
+    handler: handlers/backend.handler
+    events: 
+      - http:
+          path: /api/{proxy+}
+          method: any
+    environment:
+      STRIPE_SECRET_KEY: ${self:custom.envfile.stripe_secret_key, ''}
+
+#    The following are a few example events you can configure
+#    NOTE: Please make sure to change your handler code to work with those events
+#    Check the event documentation for details
+#    events:
+#      - httpApi:
+#          path: /users/create
+#          method: get
+#      - websocket: $connect
+#      - s3: ${env:BUCKET}
+#      - schedule: rate(10 minutes)
+#      - sns: greeter-topic
+#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
+#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
+#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
+#      - iot:
+#          sql: "SELECT * FROM 'some_topic'"
+#      - cloudwatchEvent:
+#          event:
+#            source:
+#              - "aws.ec2"
+#            detail-type:
+#              - "EC2 Instance State-change Notification"
+#            detail:
+#              state:
+#                - pending
+#      - cloudwatchLog: '/aws/lambda/hello'
+#      - cognitoUserPool:
+#          pool: MyUserPool
+#          trigger: PreSignUp
+#      - alb:
+#          listenerArn: arn:aws:elasticloadbalancing:us-east-1:XXXXXX:listener/app/my-load-balancer/50dc6c495c0c9188/
+#          priority: 1
+#          conditions:
+#            host: example.com
+#            path: /hello
+
+#    Define function environment variables here
+#    environment:
+#      variable2: value2
+
+# you can add CloudFormation resource templates here
+
+plugins:
+  - serverless-layers
+custom:
+  envfile: ${file(env.yml)}
+  serverless-layers:
+    layersDeploymentBucket: csc-ca2-layers-dep-ger
+    packageManager: pip
+    dependenciesPath:  requirements.txt
+
+
+resources:
+  Resources:
+    LambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: CSC-CA2-${self:provider.stage}
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - sts:AssumeRole
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        # Policies:
+          # - PolicyName: s3-access
+          #   PolicyDocument:
+          #     Version: "2012-10-17"
+          #     Statement:
+          #       - Effect: Allow
+          #         Action:
+          #           - s3:GetObjects
+          #         Resource:
+          #           - Fn::Join:
+          #             - ":"
+          #             - - arn:aws:s3:
+          #               - ${self:provider.region}
+          #               - Ref: AWS::AccountId
+          #               - exmaplebucket
+    UserInfoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: user-info-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: userID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userID
+            KeyType: HASH
+        BillingMode: PROVISIONED
+        ProvisionedThroughput:
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 10
+          
+  Outputs:
+    UserInfoTableARN:
+      Value: 
+        Fn::GetAtt:
+        - UserInfoTable
+        - Arn
