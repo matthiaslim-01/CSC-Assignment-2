@@ -13,8 +13,7 @@ from lib.controllers.payments_controller import (
     get_publishable_key,
     webhook_received,
 )
-
-# from lib.services.db_service import get_username_from_session
+from lib.services.dynamodb_service import get_session_username, get_subscription_plan
 
 APILIST = {
     "GET": {
@@ -77,13 +76,13 @@ class Request:
         else:
             self.session_token = session_cookie.value
 
-        if self.endpoint not in ["login", "test", "get-publishable-key"]:
-            # self.username = get_username_from_session(self.session_token)
+        if self.endpoint not in ["login", "test", "get-publishable-key", "webhook"]:
+            self.username = get_session_username(self.session_token)
             if not self.username:
                 raise WebException(
                     status_code=HTTPStatus.UNAUTHORIZED, message="Unauthenticated User"
                 )
-            # self.paiduser
+            self.paiduser = get_subscription_plan(self.username)
 
         return self
 
