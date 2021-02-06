@@ -1,8 +1,8 @@
 from http import HTTPStatus
 from botocore.utils import _parse_timestamp_with_tzinfo
-from lib.services.dynamodb_service import check_session, store_session, remove_session
+from lib.services.dynamodb_service import store_session, remove_session
 from uuid import uuid4
-from webexception import WebException
+from lib.webexception import WebException
 
 def login(request,response):
     #Take username and password to authenticate, then when user is authenticated generate session and store session. 

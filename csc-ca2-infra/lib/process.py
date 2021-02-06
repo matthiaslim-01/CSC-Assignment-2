@@ -16,7 +16,6 @@ from lib.controllers.payments_controller import (
 from lib.services.dynamodb_service import get_session_username, get_subscription_plan
 from lib.controllers.commentManagement_controller import get_comments
 
-# from lib.services.db_service import get_username_from_session
 
 APILIST = {
     "GET": {
@@ -118,6 +117,6 @@ class Response:
         self.cookies.append(f"session={token}; Path=/;")
         return self
 
-    def clear_session(self):  # coverage: excludes
+    def clear_session(self):
         self.cookies = ["session=; Max-Age=0; Path=/;"]
         return self
