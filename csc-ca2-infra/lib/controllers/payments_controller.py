@@ -1,13 +1,17 @@
+import re
+from boto3 import session
 import stripe
 import json
 import os
 import boto3
 from lib.webexception import WebException
 from http import HTTPStatus
+from datetime import datetime
+
 
 # Stripe secret key
 stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
-
+stripe.api_version = os.environ["STRIPE_API_VERSION"]
 
 def get_publishable_key(request, response):
     response.body = {
@@ -90,6 +94,28 @@ def webhook_received(request, response):
     print("event " + event_type)
 
     if event_type == "checkout.session.completed":
+        now = datetime.now()
+        lastPayment = now.strftime("%d/%m/%Y %H:%M:%S")
+        dynamoDB = boto3.client('dynamodb')
+        response = dynamoDB.put_item(
+            TableName = 'user-info-dev',
+            Item = {
+                'userID': {
+                    'S': request_data["username"]
+                },
+                'subscriptionType': {
+                    'S': request_data["subscriptionType"]
+                },
+                'lastPaid': {
+                    'S': lastPayment
+                },
+                'sessionData': {
+                    'S': request_data["sessionToken"]
+                    # Probably swap to 'M' later
+                }
+            }
+        )
+        print(response)
         print("Payment succeeded!")
 
     return response

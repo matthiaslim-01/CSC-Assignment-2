@@ -57,6 +57,7 @@ functions:
       FREE_PRICE_ID: ${self:custom.envfile.free_price_id, ''}
       PRO_PRICE_ID: ${self:custom.envfile.pro_price_id, ''}
       URL: ${self:custom.envfile.stripe_url, ''}
+      STRIPE_API_VERSION: ${self:custom.envfile.stripe_api_version, ''}
   frontend:
     handler: handlers/frontend.handler
     events: 
@@ -121,7 +122,7 @@ custom:
   assets:
     auto: true
     targets:
-      - bucket: csc-assignment-2-static-test2
+      - bucket: csc-ca2-static-ger
         empty: true
         files:
         - source: static/
@@ -161,6 +162,30 @@ resources:
           #               - ${self:provider.region}
           #               - Ref: AWS::AccountId
           #               - exmaplebucket
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: User-Pool-${self:provider.stage}
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireUppercase: true
+            RequireSymbols: true
+        UsernameAttributes:
+          - email
+        Schema:
+          - AttributeDataType: String
+            Name: email
+            Required: false
+    
+    CognitoPoolClient:
+        Type: AWS::Cognito::UserPoolClient
+        Properties:
+          ClientName: Pool-Client-${self:provider.stage}      
+          UserPoolId:
+            Ref: CognitoUserPool 
+          GenerateSecret: false
+            
     UserInfoTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -199,9 +224,33 @@ resources:
         Bucket: !Ref PhotoBucket
           
           
+    SeshInfoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: session-info-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: sessionToken
+            AttributeType: S
+        KeySchema:
+          - AttributeName: sessionToken
+            KeyType: HASH
+        TimeToLiveSpecification: 
+          AttributeName: ttl
+          Enabled: true
+        BillingMode: PROVISIONED
+        ProvisionedThroughput:
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 10
+
   Outputs:
     UserInfoTableARN:
       Value: 
         Fn::GetAtt:
         - UserInfoTable
+        - Arn
+
+    SeshInfoTableARN:
+      Value: 
+        Fn::GetAtt:
+        - SeshInfoTable
         - Arn
