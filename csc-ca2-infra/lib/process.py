@@ -6,27 +6,41 @@ from lib.debugtest import debug_test
 from lib.constants import ALLOWED_ORIGINS
 from lib.webexception import WebException
 from lib.controllers.auth_controller import login, register
+from lib.controllers.payments_controller import (
+    create_checkout_session,
+    customer_portal,
+    get_checkout_session,
+    get_publishable_key,
+    webhook_received,
+)
+
 # from lib.services.db_service import get_username_from_session
 
 APILIST = {
-    "GET":{
+    "GET": {
         "test": debug_test,
+        "get-publishable-key": get_publishable_key,
+        "get-checkout-session": get_checkout_session,
     },
-    "POST":{
+    "POST": {
         "login": login,
         "register": register,
-    }
+        "create-checkout-session": create_checkout_session,
+        "customer-portal": customer_portal,
+        "webhook": webhook_received,
+    },
 }
+
 
 class Request:
     def __init__(self, event):
         self.event = event
         self.method = event.get("httpMethod", "")
         path = event.get("path", "")
-        self.endpoint = path.split("/")[-1] if not path.endswith("/") else path.split("/")[-2]
-        self.headers = {
-            k.lower(): v for k, v in event.get("headers", {}).items()
-        }
+        self.endpoint = (
+            path.split("/")[-1] if not path.endswith("/") else path.split("/")[-2]
+        )
+        self.headers = {k.lower(): v for k, v in event.get("headers", {}).items()}
         self.origin = self.headers.get("origin")
         raw_cookie = self.headers.get("cookie", "")
         self.cookies = SimpleCookie(raw_cookie if raw_cookie is not None else "")
@@ -41,9 +55,7 @@ class Request:
     def resolve_function(self):
         self.function = APILIST.get(self.method, {}).get(self.endpoint, None)
         if not self.function:
-            raise WebException(
-                status_code=HTTPStatus.NOT_FOUND, message="Invalid API"
-            )
+            raise WebException(status_code=HTTPStatus.NOT_FOUND, message="Invalid API")
 
         return self
 
@@ -65,13 +77,13 @@ class Request:
         else:
             self.session_token = session_cookie.value
 
-        if self.endpoint not in ["login","test"]:
+        if self.endpoint not in ["login", "test"]:
             # self.username = get_username_from_session(self.session_token)
             if not self.username:
                 raise WebException(
                     status_code=HTTPStatus.UNAUTHORIZED, message="Unauthenticated User"
                 )
-            #self.paiduser
+            # self.paiduser
 
         return self
 
@@ -108,4 +120,3 @@ class Response:
             "session=; Max-Age=0; Path=/;",
         ]
         return self
-       
