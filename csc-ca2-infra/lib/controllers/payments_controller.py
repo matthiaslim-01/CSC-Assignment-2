@@ -1,18 +1,19 @@
 import stripe
 import json
 import os
+import boto3
 from lib.webexception import WebException
 from http import HTTPStatus
 
 # Stripe secret key
-stripe.api_key = os.environ("STRIPE_SECRET_KEY")
+stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
 
 
 def get_publishable_key(request, response):
     response.body = {
-        "publishableKey": os.environ("STRIPE_PUBLISHABLE_KEY"),
-        "basicPrice": os.environ("FREE_PRICE_ID"),
-        "proPrice": os.environ("PRO_PRICE_ID"),
+        "publishableKey": os.environ["STRIPE_PUBLISHABLE_KEY"],
+        "basicPrice": os.environ["FREE_PRICE_ID"],
+        "proPrice": os.environ["PRO_PRICE_ID"],
     }
     return response
 
@@ -25,7 +26,7 @@ def get_checkout_session(request, response):
 
 def create_checkout_session(request, response):
     data = request.data
-    domain_url = os.environ("URL")
+    domain_url = os.environ["URL"]
 
     try:
         # Create new Checkout Session for the order
@@ -57,7 +58,7 @@ def customer_portal(request, response):
 
     # This is the URL to which the customer will be redirected after they are
     # done managing their billing with the portal.
-    return_url = os.environ("URL")
+    return_url = os.environ["URL"]
 
     session = stripe.billing_portal.Session.create(
         customer=checkout_session.customer, return_url=return_url
@@ -67,7 +68,7 @@ def customer_portal(request, response):
 
 
 def webhook_received(request, response):
-    webhook_secret = os.environ("STRIPE_WEBHOOK_SECRET")
+    webhook_secret = os.environ["STRIPE_WEBHOOK_SECRET"]
     request_data = request.data
     if webhook_secret:
         # Retrieve the event by verifying the signature using the raw body and secret if webhook signing is configured.

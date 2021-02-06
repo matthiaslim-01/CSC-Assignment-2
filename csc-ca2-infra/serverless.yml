@@ -55,8 +55,8 @@ functions:
       STRIPE_SECRET_KEY: ${self:custom.envfile.stripe_secret_key, ''}
       STRIPE_WEBHOOK_SECRET: ${self:custom.envfile.stripe_webhook_secret, ''}
       FREE_PRICE_ID: ${self:custom.envfile.free_price_id, ''}
-      PRO_PRICE_ID: ${self.custom.envfile.pro_price_id, ''}
-      URL: ${self.custom.envfile.stripe_url, ''}
+      PRO_PRICE_ID: ${self:custom.envfile.pro_price_id, ''}
+      URL: ${self:custom.envfile.stripe_url, ''}
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
