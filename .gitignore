@@ -353,3 +353,4 @@ MigrationBackup/
 .serverless/
 cred.ps1
 env.yml
+csc-ca2-infra/.pylintrc
