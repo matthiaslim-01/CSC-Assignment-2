@@ -156,6 +156,29 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 10
           WriteCapacityUnits: 10
+
+    PhotoBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: csc-assignment-photo-bucket-ger
+        AccessControl: PublicRead
+    
+    PhotoBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref PhotoBucket
+                  - /*
+        Bucket: !Ref PhotoBucket
+          
           
   Outputs:
     UserInfoTableARN:
