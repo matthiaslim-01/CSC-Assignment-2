@@ -57,6 +57,15 @@ functions:
       FREE_PRICE_ID: ${self:custom.envfile.free_price_id, ''}
       PRO_PRICE_ID: ${self:custom.envfile.pro_price_id, ''}
       URL: ${self:custom.envfile.stripe_url, ''}
+  frontend:
+    handler: handlers/frontend.handler
+    events: 
+      - http:
+          path: /
+          method: any
+      - http:
+          path: /{proxy+}
+          method: any
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -102,12 +111,22 @@ functions:
 
 plugins:
   - serverless-layers
+  - serverless-s3-deploy
 custom:
   envfile: ${file(env.yml)}
   serverless-layers:
     layersDeploymentBucket: csc-ca2-layers-dep-ger
     packageManager: pip
     dependenciesPath:  requirements.txt
+  assets:
+    auto: true
+    targets:
+      - bucket: csc-assignment-2-static-test2
+        empty: true
+        files:
+        - source: static/
+          globs: 
+            - '**/*'
 
 
 resources:
