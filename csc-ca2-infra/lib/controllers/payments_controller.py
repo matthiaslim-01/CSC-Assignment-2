@@ -101,16 +101,16 @@ def webhook_received(request, response):
             TableName = 'user-info-dev',
             Item = {
                 'userID': {
-                    'S': 'Abcdefg'
+                    'S': request_data["username"]
                 },
                 'subscriptionType': {
-                    'S': 'Paid'
+                    'S': request_data["subscriptionType"]
                 },
                 'lastPaid': {
                     'S': lastPayment
                 },
                 'sessionData': {
-                    'S': 'test'
+                    'S': request_data["sessionToken"]
                     # Probably swap to 'M' later
                 }
             }

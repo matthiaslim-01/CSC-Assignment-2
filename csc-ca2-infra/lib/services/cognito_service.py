@@ -17,3 +17,6 @@ def sign_up(username, password):
         Username = username,
         Password = password
     )
+
+def sign_in(username, password):
+    cognito = init_client()
