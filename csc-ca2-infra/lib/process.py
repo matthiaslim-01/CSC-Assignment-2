@@ -14,12 +14,16 @@ from lib.controllers.payments_controller import (
     webhook_received,
 )
 from lib.services.dynamodb_service import get_session_username, get_subscription_plan
+from lib.controllers.commentManagement_controller import get_comments
+
+# from lib.services.db_service import get_username_from_session
 
 APILIST = {
     "GET": {
         "test": debug_test,
         "get-publishable-key": get_publishable_key,
         "get-checkout-session": get_checkout_session,
+        "get-comments": get_comments,
     },
     "POST": {
         "login": login,
@@ -115,7 +119,5 @@ class Response:
         return self
 
     def clear_session(self):  # coverage: excludes
-        self.cookies = [
-            "session=; Max-Age=0; Path=/;",
-        ]
+        self.cookies = ["session=; Max-Age=0; Path=/;"]
         return self

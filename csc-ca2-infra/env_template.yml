@@ -1,13 +1,13 @@
 # Stripe Keys
-stripe_publishable_key: "",
-stripe_secret_key: "",
+stripe_publishable_key: ""
+stripe_secret_key: ""
 
 # Required to run Webhook
-stripe_webhook_secret: "",
+stripe_webhook_secret: ""
 
 # Stripe subscription data
-free_price_id: "",
-pro_price_id: "",
+free_price_id: ""
+pro_price_id: ""
 
 # Route
 stripe_url: ""
