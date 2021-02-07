@@ -5,6 +5,7 @@ import json
 import os
 import boto3
 from lib.webexception import WebException
+from lib.services.dynamodb_service import delete_item, put_item
 from http import HTTPStatus
 from datetime import datetime
 
@@ -23,15 +24,14 @@ def get_publishable_key(request, response):
 
 
 def get_checkout_session(request, response):
-    id = request.args.get("sessionId")
+    id = request.data["sessionId"]
     response.body = stripe.checkout.Session.retrieve(id)
     return response
 
-
 def create_checkout_session(request, response):
-    data = request.data
+    priceID = request.data["priceId"]
     domain_url = os.environ["URL"]
-
+    
     try:
         # Create new Checkout Session for the order
         # Other optional params include:
@@ -41,12 +41,14 @@ def create_checkout_session(request, response):
 
         # ?session_id={CHECKOUT_SESSION_ID} means the redirect will have the session ID set as a query param
         checkout_session = stripe.checkout.Session.create(
-            success_url=domain_url + "/Success.html?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=domain_url + "/Cancel.html",
+            success_url=domain_url + "Success.html?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url=domain_url + "Cancel.html",
             payment_method_types=["card"],
             mode="subscription",
-            line_items=[{"price": data["priceId"], "quantity": 1}],
+            line_items=[{"price": priceID, "quantity": 1}],
         )
+        # line_items = stripe.checkout.Session.list_line_items(checkout_session["id"])
+        # response.body = line_items
         response.body = {"sessionId": checkout_session["id"]}
         return response
     except Exception as e:
@@ -96,27 +98,27 @@ def webhook_received(request, response):
     if event_type == "checkout.session.completed":
         now = datetime.now()
         lastPayment = now.strftime("%d/%m/%Y %H:%M:%S")
-        dynamoDB = boto3.client('dynamodb')
-        response = dynamoDB.put_item(
-            TableName = 'user-info-dev',
-            Item = {
-                'userID': {
-                    'S': request_data["username"]
-                },
-                'subscriptionType': {
-                    'S': request_data["subscriptionType"]
-                },
-                'lastPaid': {
-                    'S': lastPayment
-                },
-                'sessionData': {
-                    'S': request_data["sessionToken"]
-                    # Probably swap to 'M' later
-                }
-            }
-        )
+        username = request_data["username"]
+        subscription_plan = request_data["subscription"]
+        session = request_data["id"]
+        put_item(username, subscription_plan, lastPayment, session)
         print(response)
         print("Payment succeeded!")
 
+    if event_type == "customer.subscription.updated":
+        now = datetime.now()
+        lastPayment = now.strftime("%d/%m/%Y %H:%M:%S")
+        username = request_data["username"]
+        subscription_plan = request_data["subscription"]
+        session = request_data["id"]
+        put_item(username, subscription_plan, lastPayment, session)
+        print(response)
+        print("Payment succeeded!")
+    
+    if event_type == "customer.subscription.deleted":
+        username = request_data["username"]
+        delete_item(username)
+        print(response)
+        print("Payment succeeded!")
     return response
 

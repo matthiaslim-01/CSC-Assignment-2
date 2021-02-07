@@ -68,4 +68,32 @@ def get_subscription_plan(username):
     subscription_type = db_result.get("Item", {}).get("subscriptionType", {}).get('S', "Free")
     return subscription_type == "Paid"
     
+def put_item(username, subscription_plan, last_payment, session ):
+    db = init_client()
+    db.put_item(
+        TableName = 'user-info-dev',
+        Item = {
+            'userID': {
+                'S': username
+            },
+            'subscriptionPlan': {
+                'S': subscription_plan
+            },
+            'lastPaid': {
+                'S': last_payment
+            },
+            'sessionData': {
+                'S': session
+            }
+        }
+    )
 
+def delete_item(username):
+    db = init_client()
+    db.delete_item(
+        Key = {
+            'userID' : {
+                'S': username
+            }
+        }
+    )
