@@ -15,7 +15,7 @@ def store_session(session, username):
     db = init_client()
     expiry = int(time())+86400
     db.put_item(
-            TableName = 'session-info-dev',
+            TableName = '',
             Item = {
                 'sessionToken': {
                     'S': session
@@ -32,7 +32,7 @@ def store_session(session, username):
 def remove_session(session):
     db = init_client()
     db.delete_item(
-        TableName = 'session-info-dev',
+        TableName = '',
         Key = {
             'sessionToken': {
                 'S': session
@@ -43,7 +43,7 @@ def remove_session(session):
 def get_session_username(session):
     db = init_client()
     db_result = db.get_item(
-        TableName = 'session-info-dev',
+        TableName = '',
         Key = {
             'sessionToken': {
                 'S': session
@@ -57,7 +57,7 @@ def get_session_username(session):
 def get_subscription_plan(username):
     db = init_client()
     db_result = db.get_item(
-        TableName = 'user-info-dev',
+        TableName = '',
         Key = {
             'userID': {
                 'S': username
@@ -71,7 +71,7 @@ def get_subscription_plan(username):
 def put_item(username, subscription_plan, last_payment, session ):
     db = init_client()
     db.put_item(
-        TableName = 'user-info-dev',
+        TableName = '',
         Item = {
             'userID': {
                 'S': username

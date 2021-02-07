@@ -25,7 +25,7 @@ def login(request,response):
 def register(request,response):
     #DO STUFF
     data = request.data
-    full_name = data["full_name"]
+    #full_name = data["full_name"]
     username = data["username"]
     password = data["password"]
     
