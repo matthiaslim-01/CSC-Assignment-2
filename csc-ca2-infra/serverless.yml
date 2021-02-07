@@ -58,6 +58,10 @@ functions:
       PRO_PRICE_ID: ${self:custom.envfile.pro_price_id, ''}
       URL: ${self:custom.envfile.stripe_url, ''}
       STRIPE_API_VERSION: ${self:custom.envfile.stripe_api_version, ''}
+      HOST: ${self:custom.envfile.host, ''}
+      USER: ${self:custom.envfile.user, ''}
+      PASSWORD: ${self:custom.envfile.password, ''}
+      DATABASE: ${self:custom.envfile.database, ''}
   frontend:
     handler: handlers/frontend.handler
     events: 
@@ -241,6 +245,28 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 10
           WriteCapacityUnits: 10
+
+    CscAssignment2DBInstance:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        DBName: ${self:custom.envfile.database, ''}${self:provider.stage}
+        AllocatedStorage: 10
+        Engine: mysql
+        EngineVersion: 5.7
+        MasterUsername: ${self:custom.envfile.user, ''}
+        DBInstanceClass: db.t3.small
+        MasterUserPassword: ${self:custom.envfile.password, ''}
+        VPCSecurityGroups:
+        - !GetAtt DBEC2SecurityGroup.GroupId
+    DBEC2SecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Open database for access
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+          SourceSecurityGroupId: ${self:custom.envfile.sg_id, ''}
 
   Outputs:
     UserInfoTableARN:

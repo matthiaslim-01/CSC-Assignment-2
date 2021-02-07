@@ -14,7 +14,7 @@ from lib.controllers.payments_controller import (
     webhook_received,
 )
 from lib.services.dynamodb_service import get_session_username, get_subscription_plan
-from lib.controllers.commentManagement_controller import get_comments
+from lib.controllers.comment_management_controller import get_comments, create_comment
 
 
 APILIST = {
@@ -30,6 +30,7 @@ APILIST = {
         "create-checkout-session": create_checkout_session,
         "customer-portal": customer_portal,
         "webhook": webhook_received,
+        "create-comment": create_comment,
     },
 }
 
@@ -63,7 +64,7 @@ class Request:
 
     def check_csrf(self):
         # if self.method in ["POST", "PUT", "DELETE"]:
-        #     csrf_header = self.headers.get("x-csrf-token")
+        #     csrf_header = self.headers.get("x-csrf-header")
         #     csrf_morsel = self.cookies.get("csrf-cookie")
         #     if not csrf_morsel or not csrf_header or csrf_morsel.value != csrf_header:
         #         raise WebException(
