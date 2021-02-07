@@ -83,6 +83,7 @@
 <script>
     // If a fetch error occurs, log it to the console and show it in the UI.
     var handleFetchResult = function (result) {
+        console.log(result)
         if (!result.ok) {
             return result.then(function (json) {
                 if (json.error && json.error.message) {
@@ -94,34 +95,37 @@
             });
         }
         console.log(result)
-        return result.data;
+        return result.json()
     };
 
     function createCheckoutSession(priceId) {
-        // return fetch("/dev/api/create-checkout-session", {
-        //     method: "POST",
-        //     headers: {
-        //         "Content-Type": "application/json"
-        //     },
-        //     body: JSON.stringify({
-        //         priceId: priceId
-        //     })
-        // }).then(function (result) {
-        //     return result.data;
-        // });
-        $.ajax({
-            url: "/dev/api/create-checkout-session",
+        return fetch("/dev/api/create-checkout-session", {
             method: "POST",
-            data: {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
                 priceId: priceId
-            }
-        }).done((response) => {
-            console.log(response)
-            return response
-        }).fail((response) => {
-            console.log(response)
-            console.log("request failed")
-        })
+            })
+        }).then(function (result) {
+            return result.json();
+        }).then(function (json) {
+            return json.data;
+        });
+        // $.ajax({
+        //     url: "/dev/api/create-checkout-session",
+        //     method: "POST",
+        //     data: {
+        //         priceId: priceId
+        //     }
+        // }).done((response) => {
+        //     console.log(response)
+        //     return response
+        // }).fail((response) => {
+        //     console.log(response)
+        //     console.log("request failed")
+        // })
     };
 
     // Handle any errors returned from Checkout
@@ -138,47 +142,88 @@
     };
 
     // Get Stripe publishable key
-    $.ajax({
-            url: "/dev/api/get-publishable-key",
-            method: "GET"
-        }).done((response) => {
-            console.log(response)
-            var publishableKey = response.data.publishableKey;
-            var freePriceId = response.data.basicPrice;
-            var proPriceId = response.data.proPrice;
-            console.log(proPriceId)
+    fetch("/dev/api/get-publishable-key",
+        {
+            credentials: "include"
+        })
+        .then(handleFetchResult)
+        .then((json) => { return json.data })
+        .then(function (json) {
+            console.log(json)
+            var publishableKey = json.publishableKey;
+            var basicPriceId = json.basicPrice;
+            var proPriceId = json.proPrice;
 
             var stripe = Stripe(publishableKey);
             // Setup event handler to create a Checkout Session when button is clicked
             document
                 .getElementById("basic-plan-btn")
                 .addEventListener("click", function (evt) {
-                    createCheckoutSession(freePriceId).done(function (response) {
+                    createCheckoutSession(basicPriceId).then(function (data) {
                         // Call Stripe.js method to redirect to the new Checkout page
                         stripe
                             .redirectToCheckout({
-                                sessionId: response.data.sessionId
+                                sessionId: data.sessionId
                             })
                             .then(handleResult);
                     });
                 });
+
+            // Setup event handler to create a Checkout Session when button is clicked
             document
                 .getElementById("pro-plan-btn")
                 .addEventListener("click", function (evt) {
-                    createCheckoutSession(proPriceId).done(function (response) {
-                        console.log(response)
+                    createCheckoutSession(proPriceId).then(function (data) {
                         // Call Stripe.js method to redirect to the new Checkout page
                         stripe
                             .redirectToCheckout({
-                                sessionId: response.data.sessionId
+                                sessionId: data.sessionId
                             })
                             .then(handleResult);
                     });
                 });
-        }).fail((data) => {
-            console.log(data)
-            console.log("failed request")
-        })
+        });
+            // $.ajax({
+            //     url: "/dev/api/get-publishable-key",
+            //     method: "GET"
+            // }).done((response) => {
+            //     console.log(response)
+            //     var publishableKey = response.data.publishableKey;
+            //     var freePriceId = response.data.basicPrice;
+            //     var proPriceId = response.data.proPrice;
+            //     console.log(proPriceId)
+
+            //     var stripe = Stripe(publishableKey);
+            //     // Setup event handler to create a Checkout Session when button is clicked
+            //     document
+            //         .getElementById("basic-plan-btn")
+            //         .addEventListener("click", function (evt) {
+            //             createCheckoutSession(freePriceId).then(function (response) {
+            //                 // Call Stripe.js method to redirect to the new Checkout page
+            //                 stripe
+            //                     .redirectToCheckout({
+            //                         sessionId: response.data.sessionId
+            //                     })
+            //                     .then(handleResult);
+            //             });
+            //         });
+            //     document
+            //         .getElementById("pro-plan-btn")
+            //         .addEventListener("click", function (evt) {
+            //             createCheckoutSession(proPriceId).then(function (response) {
+            //                 console.log(response)
+            //                 // Call Stripe.js method to redirect to the new Checkout page
+            //                 stripe
+            //                     .redirectToCheckout({
+            //                         sessionId: response.data.sessionId
+            //                     })
+            //                     .then(handleResult);
+            //             });
+            //         });
+            // }).fail((data) => {
+            //     console.log(data)
+            //     console.log("failed request")
+            // })
 </script>
 
 </body>

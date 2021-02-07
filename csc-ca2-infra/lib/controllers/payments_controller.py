@@ -14,6 +14,7 @@ from datetime import datetime
 stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
 stripe.api_version = os.environ["STRIPE_API_VERSION"]
 
+
 def get_publishable_key(request, response):
     response.body = {
         "publishableKey": os.environ["STRIPE_PUBLISHABLE_KEY"],
@@ -28,10 +29,11 @@ def get_checkout_session(request, response):
     response.body = stripe.checkout.Session.retrieve(id)
     return response
 
+
 def create_checkout_session(request, response):
     priceID = request.data["priceId"]
     domain_url = os.environ["URL"]
-    
+
     try:
         # Create new Checkout Session for the order
         # Other optional params include:
@@ -69,23 +71,28 @@ def customer_portal(request, response):
     session = stripe.billing_portal.Session.create(
         customer=checkout_session.customer, return_url=return_url
     )
+    print(request.session_token)
+    print(checkout_session.customer)
+    ##After authentication is built, Link stripe customer ID with Username
     response.body = {"url": session.url}
     return response
 
 
 def webhook_received(request, response):
     webhook_secret = os.environ["STRIPE_WEBHOOK_SECRET"]
+    raw_body = request.event.get("body", "")
     request_data = request.data
     if webhook_secret:
         # Retrieve the event by verifying the signature using the raw body and secret if webhook signing is configured.
         signature = request.headers.get("stripe-signature")
         try:
-            event = stripe.Webhook.construct_event(
-                payload=request.data, sig_header=signature, secret=webhook_secret
-            )
+            event = stripe.Webhook.construct_event(raw_body, signature, webhook_secret)
             data = event["data"]
         except Exception as e:
-            return e
+            print(e)
+            raise WebException(
+                status_code=HTTPStatus.BAD_REQUEST, message=str(e)
+            ) from e
         # Get the type of webhook event sent - used to check the status of PaymentIntents.
         event_type = event["type"]
     else:
@@ -109,12 +116,13 @@ def webhook_received(request, response):
         now = datetime.now()
         lastPayment = now.strftime("%d/%m/%Y %H:%M:%S")
         username = request_data["username"]
+        ## Retrieve username from rds/dynamodb using customerID
         subscription_plan = request_data["subscription"]
         session = request_data["id"]
         put_item(username, subscription_plan, lastPayment, session)
         print(response)
         print("Payment succeeded!")
-    
+
     if event_type == "customer.subscription.deleted":
         username = request_data["username"]
         delete_item(username)

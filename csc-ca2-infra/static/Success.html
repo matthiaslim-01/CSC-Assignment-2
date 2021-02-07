@@ -96,10 +96,13 @@
         let customerId;
 
         if (sessionId) {
-            fetch("/checkout-session?sessionId=" + sessionId)
+            fetch("/dev/api/checkout-session?sessionId=" + sessionId, {
+                credentials: "include"
+            })
                 .then(function (result) {
                     return result.json();
                 })
+                .then((json) => { return json.data })
                 .then(function (session) {
                     //use Database-as-a-service to store customerId
                     customerId = session.customer;
@@ -115,16 +118,18 @@
         const manageBillingForm = document.querySelector('#manage-billing-form');
         manageBillingForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            fetch('/customer-portal', {
+            fetch('/dev/api/customer-portal', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: "include",
                 body: JSON.stringify({
                     sessionId: sessionId
                 }),
             })
                 .then((response) => response.json())
+                .then((json) => { return json.data })
                 .then((data) => {
                     window.location.href = data.url;
                 })

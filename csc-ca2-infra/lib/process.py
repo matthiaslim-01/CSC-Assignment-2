@@ -21,7 +21,7 @@ APILIST = {
     "GET": {
         "test": debug_test,
         "get-publishable-key": get_publishable_key,
-        "get-checkout-session": get_checkout_session,
+        "checkout-session": get_checkout_session,
         # "get-comments": get_comments,
     },
     "POST": {
@@ -83,13 +83,7 @@ class Request:
         else:
             self.session_token = session_cookie.value
 
-        if self.endpoint not in [
-            "login",
-            "test",
-            "get-publishable-key",
-            "webhook",
-            "create-checkout-session",
-        ]:
+        if self.endpoint in []:
             self.username = get_session_username(self.session_token)
             if not self.username:
                 raise WebException(

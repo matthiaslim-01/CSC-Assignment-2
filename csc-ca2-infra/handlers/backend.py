@@ -5,10 +5,10 @@ from lib.constants import ALLOWED_ORIGINS, ISE_ERROR_MESSAGE
 from lib.webexception import WebException
 
 
-
 def handler(event, context):
     print("Invoked")
     request = Request(event)
+    print(request.endpoint)
     response = Response(request.origin)
 
     try:
@@ -24,10 +24,10 @@ def handler(event, context):
     except Exception:
         response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         response.message = ISE_ERROR_MESSAGE
-    
+
     headers = {
-            "content-type": "application/json",
-        }
+        "content-type": "application/json",
+    }
     if request.origin in ALLOWED_ORIGINS:
         headers["access-control-allow-origin"] = request.origin
         headers["access-control-allow-credentials"] = True
