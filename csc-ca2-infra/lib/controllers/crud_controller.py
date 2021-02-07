@@ -135,7 +135,7 @@ def uploadImage(request, response):
     talent_name = data["talentName"]
     talent_bio = data["talentBio"]
     # UPDATE THIS 2 VARIABLES TO NOT BE HARDCODED
-    bucketName = "csc-assignment-photo-bucket-aloy"
+    bucketName = "csc-assignment-photo-bucket-teh"
     bucketRegion = "us-east-1"
 
     try:
@@ -168,7 +168,7 @@ def updateTalent(request, response):
     talent_name = data["talentName"]
     talent_bio = data["talentBio"]
     # UPDATE THIS 2 VARIABLES TO NOT BE HARDCODED
-    bucketName = "csc-assignment-photo-bucket-aloy"
+    bucketName = "csc-assignment-photo-bucket-teh"
     bucketRegion = "us-east-1"
 
     try:
@@ -194,7 +194,7 @@ def deleteTalent(request, response):
     targetKey = getUUID(URL)
 
     # UPDATE THIS VARIABLE TO NOT BE HARDCODED
-    bucketName = "csc-assignment-photo-bucket-aloy"
+    bucketName = "csc-assignment-photo-bucket-teh"
 
     try:
         s3Response = init_client().delete_object(bucketName, targetKey)
