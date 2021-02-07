@@ -15,7 +15,7 @@ from lib.controllers.payments_controller import (
 )
 from lib.services.dynamodb_service import get_session_username, get_subscription_plan
 from lib.controllers.comment_management_controller import get_comments, create_comment
-
+from lib.controllers.crud_controller import uploadImage, updateTalent, deleteTalent
 
 APILIST = {
     "GET": {
@@ -31,6 +31,9 @@ APILIST = {
         "customer-portal": customer_portal,
         "webhook": webhook_received,
         "create-comment": create_comment,
+        "uploadImage": uploadImage,
+        "updateTalent": updateTalent,
+        "deleteTalent": deleteTalent,
     },
 }
 

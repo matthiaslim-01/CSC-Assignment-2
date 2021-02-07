@@ -9,7 +9,7 @@ import uuid
 import imghdr
 # pymysql for mySql connection.
 import pymysql
-# PIL Image for opening image files.
+# Image for opening image files.
 from PIL import Image
 # base64 for base 64 encoding/decoding.
 import base64
@@ -119,7 +119,7 @@ def getUUID(URL):
 def uploadImage(request, response):
     # Load file
     data = request.data
-    file = data["inputFiles"]
+    file = data["photo"]
     image = base64.b64decode(str(file))
     img = Image.open(io.BytesIO(image))
 
@@ -135,7 +135,7 @@ def uploadImage(request, response):
     talent_name = data["talentName"]
     talent_bio = data["talentBio"]
     # UPDATE THIS 2 VARIABLES TO NOT BE HARDCODED
-    bucketName = "csc-ca2-crud-test-bucket"
+    bucketName = "csc-assignment-photo-bucket-aloy"
     bucketRegion = "us-east-1"
 
     try:
@@ -156,7 +156,7 @@ def uploadImage(request, response):
 
     return response
 
-def updateTalentImage(request, response):
+def updateTalent(request, response):
     data = request.data
     file = data["inputFiles"]
     image = base64.b64decode(str(file))
@@ -168,7 +168,7 @@ def updateTalentImage(request, response):
     talent_name = data["talentName"]
     talent_bio = data["talentBio"]
     # UPDATE THIS 2 VARIABLES TO NOT BE HARDCODED
-    bucketName = "csc-ca2-crud-test-bucket"
+    bucketName = "csc-assignment-photo-bucket-aloy"
     bucketRegion = "us-east-1"
 
     try:
@@ -194,7 +194,7 @@ def deleteTalent(request, response):
     targetKey = getUUID(URL)
 
     # UPDATE THIS VARIABLE TO NOT BE HARDCODED
-    bucketName = "csc-ca2-crud-test-bucket"
+    bucketName = "csc-assignment-photo-bucket-aloy"
 
     try:
         s3Response = init_client().delete_object(bucketName, targetKey)
