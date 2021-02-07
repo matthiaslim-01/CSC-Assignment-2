@@ -110,7 +110,7 @@
         //     return result.data;
         // });
         $.ajax({
-            url: "https://m21r0z6rrh.execute-api.us-east-1.amazonaws.com/dev/api/create-checkout-session",
+            url: "/dev/api/create-checkout-session",
             method: "POST",
             data: {
                 priceId: priceId
@@ -139,7 +139,7 @@
 
     // Get Stripe publishable key
     $.ajax({
-            url: "https://m21r0z6rrh.execute-api.us-east-1.amazonaws.com/dev/api/get-publishable-key",
+            url: "/dev/api/get-publishable-key",
             method: "GET"
         }).done((response) => {
             console.log(response)

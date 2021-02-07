@@ -13,7 +13,7 @@ def init_client():
 def sign_up(username, password):
     cognito = init_client()
     cognito.sign_up(
-        ClientId = "2j58pg8b6ltkbkjefbihp3kncs",
+        ClientId = "",
         Username = username,
         Password = password
     )

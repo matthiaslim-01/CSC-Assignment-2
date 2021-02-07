@@ -83,13 +83,8 @@ class Request:
         else:
             self.session_token = session_cookie.value
 
-        if self.endpoint not in [
             "login",
-            "test",
-            "get-publishable-key",
-            "webhook",
-            "create-checkout-session",
-        ]:
+        if self.endpoint not in [
             self.username = get_session_username(self.session_token)
             if not self.username:
                 raise WebException(

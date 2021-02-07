@@ -120,7 +120,7 @@ plugins:
 custom:
   envfile: ${file(env.yml)}
   serverless-layers:
-    layersDeploymentBucket: csc-ca2-layers-dep-ger
+    layersDeploymentBucket: 
     packageManager: pip
     dependenciesPath:  requirements.txt
   assets:
@@ -208,7 +208,7 @@ resources:
     PhotoBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: csc-assignment-photo-bucket-ger
+        BucketName: 
         AccessControl: PublicRead
     
     PhotoBucketPolicy:
