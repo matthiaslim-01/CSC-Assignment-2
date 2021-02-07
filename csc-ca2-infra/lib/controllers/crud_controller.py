@@ -9,8 +9,6 @@ import uuid
 import imghdr
 # pymysql for mySql connection.
 import pymysql
-# Image for opening image files.
-from PIL import Image
 # base64 for base 64 encoding/decoding.
 import base64
 # io for dealing with file objects with different I/O.
@@ -23,6 +21,8 @@ from http import HTTPStatus
 from google.cloud import vision
 # os for usage of envionment variables.
 import os
+
+import json
 
 """
 TODO
@@ -56,38 +56,20 @@ def init_client():
         logging.error("init_client -- %s", e)
         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
 
-def isValidImageFile(file):
-    fileType = imghdr.what(file)
-    if (fileType == "jpeg" or fileType == "png"):
-        logging.info(
-            "isValidImageFile -- File Validation for Image: Passed")
+def containsHumanFace(base64):
+    client = vision.ImageAnnotationClient()
+    # Set confidence level after done.
+    content = base64.read()
+    image = vision.Image(content=content)
+    CVResponse = client.face_detection(image=image)
+    faces = CVResponse.face_annotations
+    confidence = int(faces.detectionConfidence)
+
+    if (confidence >= 0.7):
+        logging.info("containsHumanFace -- Image contains Human Face: Passed")
         return True
     else:
-        logging.error(
-            "isValidImageFile -- File Validation for Image: Failed")
-        return False
-
-def containsHumanFace(base64, img):
-    # Check if file is an Image
-    if (isValidImageFile(img)):
-        # Check if Image contains Human face by using Cloud Vision API
-        client = vision.ImageAnnotationClient()
-        # Set confidence level after done.
-        content = base64.read()
-        image = vision.Image(content=content)
-        CVResponse = client.face_detection(image=image)
-        faces = CVResponse.face_annotations
-        confidence = int(faces.detectionConfidence)
-
-        if (confidence >= 0.7):
-            logging.info(
-                "containsHumanFace -- Image contains Human Face: Passed")
-            return True
-        else:
-            logging.error(
-                "containsHumanFace -- Image contains Human Face: Failed")
-            return False
-    else:
+        logging.error("containsHumanFace -- Image contains Human Face: Failed")
         return False
 
 def uploadToSql(query):
@@ -116,15 +98,31 @@ def getUUID(URL):
     logging.info("getUUID -- Target UUID: %s", splicedUUID)
     return splicedUUID
 
+def getAllTalents(request, response):
+    connection = pymysql.connect(host=os.environ["HOST"], user=os.environ["USER"], password=os.environ["PASSWORD"], database=os.environ["DATABASE"])
+    logging.info("getAllTalents -- Connection to mySql server successful!")
+    try:
+        cur = connection.cursor()
+        rows = cur.fetchall()
+        allTalentsJson = json.dumps(rows)
+        response.body = allTalentsJson
+        return response
+        
+    except ClientError as e:    
+        logging.error(e)
+        raise WebException(status_code=HTTPStatus.BAD_REQUEST, message="uploadImage -- File failed Validations.")
+    finally:
+        logging.info("uploadToSql -- Closing mySql connection")
+        connection.close()
+
 def uploadImage(request, response):
     # Load file
     data = request.data
     file = data["photo"]
     image = base64.b64decode(str(file))
-    img = Image.open(io.BytesIO(image))
 
     # Validations
-    if (containsHumanFace(file, img) == False):
+    if (containsHumanFace(file) == False):
         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message="uploadImage -- File failed Validations.")
 
     # Setting UUID for this file
@@ -140,7 +138,7 @@ def uploadImage(request, response):
 
     try:
         # Uploading file to S3
-        s3Response = init_client().upload_fileobj(img, bucketName, objectKey)
+        s3Response = init_client().upload_fileobj(image, bucketName, objectKey)
         logging.info("uploadImage -- S3 Upload response: %s", s3Response)
 
         # Set the s3 URL to current Image
@@ -160,7 +158,6 @@ def updateTalent(request, response):
     data = request.data
     file = data["inputFiles"]
     image = base64.b64decode(str(file))
-    img = Image.open(io.BytesIO(image))
     URL = data["url"]
     targetKey = getUUID(URL)
 
@@ -172,7 +169,7 @@ def updateTalent(request, response):
     bucketRegion = "us-east-1"
 
     try:
-        s3Response = init_client().upload_fileobj(img, bucketName, targetKey)
+        s3Response = init_client().upload_fileobj(image, bucketName, targetKey)
         logging.info("updateTalentImage -- S3 Update response: %s", s3Response)
 
         # Set the s3 URL to current Image
