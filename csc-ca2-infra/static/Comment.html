@@ -4,11 +4,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Create new Talent</title>
+    <title>Comment Page</title>
     <link rel="icon" href="dev/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="css/site.css" />
+    <link href="lib/jquery-comments/css/jquery-comments.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/comment_management.css" />
 </head>
+
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -26,9 +28,6 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="Privacy.html">Privacy</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" href="Upload.html">Create Talent</a>
-                        </li>
                     </ul>
                 </div>
                 <div class="d-flex">
@@ -42,28 +41,13 @@
             </div>
         </nav>
     </header>
-    <div id="main-content-upload" class="container">
-        <div class="row">
-            <div class="col">
-                <form>
-                    <div class="mb-3">
-                        <label for="formFile" class="form-label">Choose Image</label>
-                        <input class="form-control" type="file" id="formFile" accept="image/jpeg, image/png">
-                    </div>
-                    <div class="mb-3">
-                        <label for="formFile" class="form-label">Enter Name: </label>
-                        <input class="form-control" type="text" id="formName" placeholder="E.g. Yu Chien Siang">
-                    </div>
-                    <div class="mb-3">
-                        <label for="formFile" class="form-label">Enter Bio: </label>
-                        <input class="form-control" type="text" id="formBio" placeholder="E.g. The first foreign intern at IBM's R&D Lab in Germany.">
-                    </div>
-                    <div class="mb-3">
-                        <input style="color:grey" class="form-control" type="submit" id="submitTalent">
-                    </div>
-                    <p class="card-text" id="result"></p>
-                </form>
-            </div>
+
+    <div class="row">
+        <div class="image">
+            <img id="img">
+        </div>
+        <div class="col-12">
+            <div id="commentsContainer"></div>
         </div>
     </div>
 
@@ -74,6 +58,9 @@
     </footer>
     <script src="lib/jquery/dist/jquery.min.js"></script>
     <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/site.js" asp-append-version="true"></script>
+    <script src="lib/jquery-comments/js/jquery-comments.min.js"></script>
+    <script src="js/comment_management.js" asp-append-version="true"></script>
+
 </body>
+
 </html>

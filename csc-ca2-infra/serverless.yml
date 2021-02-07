@@ -126,7 +126,7 @@ custom:
   assets:
     auto: true
     targets:
-      - bucket: csc-ca2-static-ger
+      - bucket: 
         empty: true
         files:
         - source: static/
