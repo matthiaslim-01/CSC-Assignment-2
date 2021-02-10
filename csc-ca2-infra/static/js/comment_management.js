@@ -5,6 +5,19 @@ $.urlParam = function (name) {
     return (results !== null) ? results[1] || 0 : false;
 }
 
+function renderData(inData) {
+    var $pElement;
+    $divElement = $('<div></div>', { id: 'talentDetails' });
+
+    $pElement = $('<p>', { text: inData.name });
+    $divElement.append($pElement);
+
+    $pElement = $('<p>', { text: inData.bio });
+    $divElement.append($pElement);
+
+    $('#talent').append($divElement);
+}
+
 $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'false');
 $('#commentsContainer .data-container .action').prop('disabled', true);
 
@@ -21,7 +34,23 @@ $('#commentsContainer').comments({
     forceResponsive: true,
     readOnly: false,
     getComments: function (success, error) {
-        console.log($.urlParam('talentId'));
+
+        $.ajax({
+            method: 'GET',
+            url: `https://2v4tslm6qk.execute-api.us-east-1.amazonaws.com/dev/api/get-talent-detail?talentId=${$.urlParam('talentId')}`,
+            dataType: 'json',
+            async: true,
+            cache: false
+        }).done(function (data) {
+
+            console.log(data);
+
+            $('#img').attr("src", data.data.urlLink);
+
+            renderData(data.data);
+
+        })//End of ajax().done()
+
         $.ajax({
             method: 'GET',
             url: `https://2v4tslm6qk.execute-api.us-east-1.amazonaws.com/dev/api/get-comments?talentId=${$.urlParam('talentId')}&userId=${$.urlParam('userId')}`,
@@ -29,17 +58,16 @@ $('#commentsContainer').comments({
             async: true,
             cache: false
         }).done(function (data) {
-            console.log(data);
-            console.log(data.data.commentResult);
-            $('#img').attr("src", data.data.talDetails[0].UrlLink);
+
             success(data.data.commentResult);
 
-            data = data.data.commentResult;
+            commentData = data.data.commentResult;
 
-            for (var i = 0; i < data.length; i++) {
-                console.log(data[i].createdByCurrentUser === true)
-                if (data[i].createdByCurrentUser === true) {
-                    if (data[i].Subscription === "Paid") {
+            talData = data.data.talDetails;
+
+            for (var i = 0; i < commentData.length; i++) {
+                if (commentData[i].createdByCurrentUser === true) {
+                    if (commentData[i].Subscription === "Paid") {
                         $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'true');
                         $('#commentsContainer .data-container .action').prop('disabled', false);
                         break;
@@ -61,11 +89,9 @@ $('#commentsContainer').comments({
 
     },
     postComment: function (commentJSON, success, error) {
-        console.dir(commentJSON);
 
         commentJSON["userId"] = $.urlParam('userId')
         commentJSON["talentId"] = $.urlParam('talentId')
-        console.dir(commentJSON)
 
         $.ajax({
             method: 'POST',
@@ -74,7 +100,6 @@ $('#commentsContainer').comments({
             success: function (comment) {
                 console.log(comment);
                 success(comment.data);
-                //console.dir(comment);
             },
             error: error
 

@@ -5,11 +5,42 @@ from lib.webexception import WebException
 from http import HTTPStatus
 
 
+def get_talent_detail(request, response):
+    data = request.data
+
+    connection = pymysql.connect(
+        host=os.environ["RDS_HOST"],
+        user=os.environ["RDS_USER"],
+        password=os.environ["RDS_PASSWORD"],
+        database=os.environ["RDS_DATABASE"],
+    )
+
+    try:
+        with connection:
+            getTalentData = f"Select * from talent where TalentId = {data['talentId']}"
+            cur = connection.cursor(pymysql.cursors.DictCursor)
+            cur.execute(getTalentData)
+            talentResult = cur.fetchall()
+
+            result = talentResult[0]
+
+            talentDict = {
+                "urlLink": result["UrlLink"],
+                "name": result["Name"],
+                "bio": result["Bio"],
+            }
+            response.body = talentDict
+            cur.close()
+            return response
+
+    except Exception as e:
+        raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
+
+
 def get_comments(request, response):
     data = request.data
 
     commentList = []
-    talentList = []
     connection = pymysql.connect(
         host=os.environ["RDS_HOST"],
         user=os.environ["RDS_USER"],
@@ -25,7 +56,7 @@ def get_comments(request, response):
             subscriptionType = ""
             createdByCurrentUser = True
 
-            getCommentOfTalent = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, UrlLink, Name, Bio, FullName, us.Subscription from talent t, comment_management c, users u, user_subscription us where c.TalentId = {data['talentId']} and c.TalentId = t.TalentId and u.Id = c.UserId and u.Subscription = us.Id;"
+            getCommentOfTalent = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, FullName, us.Subscription from talent t, comment_management c, users u, user_subscription us where c.TalentId = {data['talentId']} and c.TalentId = t.TalentId and u.Id = c.UserId and u.Subscription = us.Id;"
 
             cur = connection.cursor(pymysql.cursors.DictCursor)
             cur.execute(getCommentOfTalent)
@@ -47,19 +78,14 @@ def get_comments(request, response):
                         "createdByCurrentUser": createdByCurrentUser,
                         "content": oneComment["Comment"],
                         "fullname": createdBy,
-                        "parent": None,
+                        "parent": oneComment["ParentId"],
                         "created": str(oneComment["CreatedAt"]),
                         "modified": str(oneComment["UpdatedAt"]),
                         "Subscription": subscriptionType,
                     }
 
-                    talentDetails = {
-                        "UrlLink": oneComment["UrlLink"],
-                        "Name": oneComment["Name"],
-                        "Bio": oneComment["Bio"],
-                    }
                     commentList.append(commentDict)
-                    talentList.append(talentDetails)
+
                 else:
                     if oneComment["UserId"] == int(data["userId"]):
                         createdBy = "You"
@@ -82,16 +108,10 @@ def get_comments(request, response):
                         "Subscription": subscriptionType,
                     }
 
-                    talentDetails = {
-                        "UrlLink": oneComment["UrlLink"],
-                        "Name": oneComment["Name"],
-                        "Bio": oneComment["Bio"],
-                    }
                     commentList.append(commentDict)
-                    talentList.append(talentDetails)
 
             cur.close()
-            response.body = {"commentResult": commentList, "talDetails": talentList}
+            response.body = {"commentResult": commentList}
             return response
 
     except Exception as e:
