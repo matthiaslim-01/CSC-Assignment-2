@@ -11,6 +11,7 @@ from lib.controllers.payments_controller import (
     customer_portal,
     get_checkout_session,
     get_publishable_key,
+    manage_billing,
     webhook_received,
 )
 from lib.services.dynamodb_service import get_session_username, get_user_info
@@ -29,6 +30,7 @@ APILIST = {
         "oauth-redirect": oauth_redirect,
         "create-checkout-session": create_checkout_session,
         "customer-portal": customer_portal,
+        "manage-billing": manage_billing,
         "webhook": webhook_received,
         "create-comment": create_comment,
         "logout": logout
@@ -88,6 +90,7 @@ class Request:
             "create-checkout-session",
             "get-publishable-key",
             "customer-portal",
+            "manage-billing",
             "create-comment",
             "checkout-session",
             "logout",

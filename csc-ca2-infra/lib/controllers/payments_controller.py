@@ -8,6 +8,7 @@ from lib.webexception import WebException
 from lib.services.dynamodb_service import (
     delete_item,
     create_or_update_user_info,
+    get_customer_id,
     get_username_from_customerid,
 )
 from http import HTTPStatus
@@ -93,6 +94,22 @@ def customer_portal(request, response):
     print(request.session_token)
     print(checkout_session.customer)
     ##After authentication is built, Link stripe customer ID with Username
+    response.body = {"url": session.url}
+    return response
+
+
+def manage_billing(request, response):
+    data = request.data
+    customer_id = get_customer_id(request.username)
+
+    # This is the URL to which the customer will be redirected after they are
+    # done managing their billing with the portal.
+    return_url = os.environ["URL"]
+
+    session = stripe.billing_portal.Session.create(
+        customer=customer_id, return_url=return_url
+    )
+    # After authentication is built, Link stripe customer ID with Username
     response.body = {"url": session.url}
     return response
 

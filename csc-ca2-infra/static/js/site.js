@@ -31,6 +31,24 @@ logoutBtn.addEventListener('click', function (e) {
         });
 });
 
+//MANAGE BILLING
+const manageBillBtn = document.querySelector('.manageBillBtn');
+manageBillBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    fetch('/dev/api/manage-billing', {
+        method: 'POST',
+        credentials: "include",
+    })
+        .then((response) => response.json())
+        .then((json) => { return json.data })
+        .then((data) => {
+            window.location.href = data.url;
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+});
+
 // UPLOAD Method
 $("#submitTalent").click((e) => {
     e.preventDefault();
@@ -47,7 +65,7 @@ $("#submitTalent").click((e) => {
         formData.append("talentBio", talentBio);
 
         $.ajax({
-            url: "https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/api/uploadImage",
+            url: "https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/api/uploadImage", // Change to own endpoint
             method: "POST",
             processData: false,
             contentType: false,
@@ -70,10 +88,10 @@ $('#search').keyup(function () {
     //var urlForJson = "data.json";
 
     //get data from Restful web Service in development environment
-    var urlForJson = "https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/api/getAllTalents";
+    var urlForJson = "https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/api/getAllTalents"; // Change to own endpoint
 
     //Url for the Cloud image hosting
-    var urlForCloudImage = "https://csc-assignment-photo-bucket-teh.s3.amazonaws.com/";
+    var urlForCloudImage = "https://csc-assignment-photo-bucket-teh.s3.amazonaws.com/"; // Change to own bucket name
 
     var searchField = $('#search').val();
     var myExp = new RegExp(searchField, "i");

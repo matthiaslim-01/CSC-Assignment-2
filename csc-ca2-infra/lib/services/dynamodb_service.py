@@ -76,6 +76,17 @@ def get_user_info(username):
         }
 
 
+def get_customer_id(username):
+    db = init_client()
+    db_result = db.get_item(TableName="user-info-dev", Key={"userID": {"S": username}},)
+    customer_id = db_result.get("Item", {}).get("customerID", {}).get("S", None)
+
+    if customer_id is None:
+        return None
+    else:
+        return customer_id
+
+
 def create_or_update_user_info(username, customerID, subscription_plan, last_payment):
     db = init_client()
     db.put_item(
