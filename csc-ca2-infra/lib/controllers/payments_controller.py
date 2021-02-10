@@ -5,7 +5,11 @@ import json
 import os
 import boto3
 from lib.webexception import WebException
-from lib.services.dynamodb_service import delete_item, create_or_update_user_info
+from lib.services.dynamodb_service import (
+    delete_item,
+    create_or_update_user_info,
+    get_username_from_customerid,
+)
 from http import HTTPStatus
 from datetime import datetime
 
@@ -26,7 +30,22 @@ def get_publishable_key(request, response):
 
 def get_checkout_session(request, response):
     id = request.data["sessionId"]
-    response.body = stripe.checkout.Session.retrieve(id)
+    checkout_info = stripe.checkout.Session.retrieve(id)
+    checkout_line_items = stripe.checkout.Session.list_line_items(id)
+    print(checkout_info)
+
+    customerId = checkout_info["customer"]
+    subscription = ""
+    now = datetime.now()
+    lastPayment = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    if checkout_line_items["data"][0]["price"]["id"] == os.environ["FREE_PRICE_ID"]:
+        subscription = "Free"
+    elif checkout_line_items["data"][0]["price"]["id"] == os.environ["PRO_PRICE_ID"]:
+        subscription = "Paid"
+
+    create_or_update_user_info(request.username, customerId, subscription, lastPayment)
+    response.body = checkout_info
     return response
 
 
@@ -98,35 +117,30 @@ def webhook_received(request, response):
     else:
         data = request_data["data"]
         event_type = request_data["type"]
+
     data_object = data["object"]
+    # print(data_object)
+    now = datetime.now()
+    customer_id = data_object["customer"]
+    username = get_username_from_customerid(customer_id)
+    subscription_plan = ""
+    subscription_id = data_object["items"]["data"][0]["price"]["id"]
+    if subscription_id == os.environ["FREE_PRICE_ID"]:
+        subscription_plan = "Free"
+    elif subscription_id == os.environ["PRO_PRICE_ID"]:
+        subscription_plan = "Paid"
 
     print("event " + event_type)
 
-    if event_type == "checkout.session.completed":
-        now = datetime.now()
+    if event_type in ["customer.subscription.updated", "invoice.payment_succeeded"]:
         lastPayment = now.strftime("%d/%m/%Y %H:%M:%S")
-        username = request_data["username"]
-        subscription_plan = request_data["subscription"]
-        session = request_data["id"]
-        create_or_update_user_info(username, session, subscription_plan, lastPayment)
-        print(response)
-        print("Payment succeeded!")
-
-    if event_type == "customer.subscription.updated":
-        now = datetime.now()
-        lastPayment = now.strftime("%d/%m/%Y %H:%M:%S")
-        username = request_data["username"]
-        ## Retrieve username from rds/dynamodb using customerID
-        subscription_plan = request_data["subscription"]
-        session = request_data["id"]
-        create_or_update_user_info(username, session,subscription_plan, lastPayment)
-        print(response)
-        print("Payment succeeded!")
+        create_or_update_user_info(
+            username, customer_id, subscription_plan, lastPayment
+        )
+        print("Payment updated!")
 
     if event_type == "customer.subscription.deleted":
-        username = request_data["username"]
         delete_item(username)
-        print(response)
-        print("Payment succeeded!")
+        print("Subscription deleted!")
     return response
 

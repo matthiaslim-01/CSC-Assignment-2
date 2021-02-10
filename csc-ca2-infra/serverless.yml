@@ -128,7 +128,7 @@ custom:
   assets:
     # auto: true
     targets:
-      - bucket: csc-assignment-2-static-test2
+      - bucket: csc-assignment-2-static-test2 # Bucket name to be changed
         empty: true
         files:
           - source: static/
@@ -162,6 +162,7 @@ resources:
                     - dynamodb:GetItem
                     - dynamodb:PutItem
                     - dynamodb:DeleteItem
+                    - dynamodb:Scan
                   Resource:
                     - Fn::Join:
                         - ":"

@@ -40,22 +40,27 @@ def get_session_username(session):
     )
     username = db_result.get("Item", {}).get("userID", {}).get("S", None)
     return username
-        
+
+
+def get_username_from_customerid(customer_id):
+    db = init_client()
+    db_result = db.scan(
+        ExpressionAttributeValues={":customerID": {"S": customer_id,},},
+        FilterExpression="customerID = :customerID",
+        ProjectionExpression="userID",
+        TableName="user-info-dev",
+    )
+
+    username = db_result.get("Items", [{}])[0].get("userID", {}).get("S", None)
+    return username
+
+
 def get_user_info(username):
     db = init_client()
-    db_result = db.get_item(
-        TableName="user-info-dev",
-        Key={"userID": {"S": username}},
-    )
-    user_id = (
-        db_result.get("Item", {}).get("userID", {}).get("S", None)
-    )
-    customer_id = (
-        db_result.get("Item", {}).get("customerID", {}).get("S", None)
-    )
-    last_payment = (
-        db_result.get("Item", {}).get("lastPayment", {}).get("S", None)
-    )
+    db_result = db.get_item(TableName="user-info-dev", Key={"userID": {"S": username}},)
+    user_id = db_result.get("Item", {}).get("userID", {}).get("S", None)
+    customer_id = db_result.get("Item", {}).get("customerID", {}).get("S", None)
+    last_payment = db_result.get("Item", {}).get("lastPayment", {}).get("S", None)
     subscription_type = (
         db_result.get("Item", {}).get("subscriptionType", {}).get("S", "Free")
     )
@@ -69,7 +74,6 @@ def get_user_info(username):
             "last_payment": last_payment,
             "subscription_type": subscription_type,
         }
-
 
 
 def create_or_update_user_info(username, customerID, subscription_plan, last_payment):
@@ -87,4 +91,4 @@ def create_or_update_user_info(username, customerID, subscription_plan, last_pay
 
 def delete_item(username):
     db = init_client()
-    db.delete_item(Key={"userID": {"S": username}})
+    db.delete_item(TableName="user-info-dev", Key={"userID": {"S": username}})

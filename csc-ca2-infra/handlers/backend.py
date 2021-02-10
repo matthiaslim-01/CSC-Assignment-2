@@ -19,9 +19,11 @@ def handler(event, context):
         response = function_to_run(request, response)
 
     except WebException as we:
+        print(we)
         response.status_code = we.status_code
         response.message = we.message
-    except Exception:
+    except Exception as e:
+        print(e)
         response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         response.message = ISE_ERROR_MESSAGE
 

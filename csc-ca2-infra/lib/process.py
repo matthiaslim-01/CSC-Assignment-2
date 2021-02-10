@@ -83,7 +83,13 @@ class Request:
         else:
             self.session_token = session_cookie.value
 
-        if self.endpoint in ["create-checkout-session","get-publishable-key","customer-portal","create-comment","checkout-session"]:
+        if self.endpoint in [
+            "create-checkout-session",
+            "get-publishable-key",
+            "customer-portal",
+            "create-comment",
+            "checkout-session",
+        ]:
             print("Logged In Method Invoked")
             self.username = get_session_username(self.session_token)
             print(self.username)
@@ -95,9 +101,10 @@ class Request:
             if user_info is None:
                 self.paiduser = False
             else:
-                self.paiduser = True if user_info["subscriptionType"] == "Paid" else False
+                self.paiduser = (
+                    True if user_info["subscription_type"] == "Paid" else False
+                )
             print(self.paiduser)
-
 
         return self
 

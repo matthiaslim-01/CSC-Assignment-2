@@ -105,11 +105,7 @@
                 })
                 .then((json) => { return json.data })
                 .then(function (session) {
-                    //use Database-as-a-service to store customerId
                     customerId = session.customer;
-
-                    var sessionJSON = JSON.stringify(session, null, 2);
-                    document.querySelector("pre").textContent = sessionJSON;
                 })
                 .catch(function (e) {
                     console.log('Error when fetching Checkout session', e);

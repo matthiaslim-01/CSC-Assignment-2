@@ -8,7 +8,7 @@ import jwt
 
 
 def oauth_redirect(request, response):
-    # Take username and password to authenticate, then when user is authenticated generate session and store session.
+    # Take email to authenticate, then when user is authenticated generate session and store session.
     data = request.data
     code_grant = data["code_grant"]
 
