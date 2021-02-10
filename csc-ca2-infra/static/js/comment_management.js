@@ -1,3 +1,31 @@
+let re = new RegExp('(?<=session=)[^ ;]+');
+var session_token = document.cookie.toString().match(re);
+if (session_token !== null) {
+    $('.loginBtn').css('display', 'none');
+    $('.createTalent').css('display', 'block');
+    $('.manageBillBtn').css('display', 'block');
+    $('.logoutBtn').css('display', 'block');
+}
+
+//LOGOUT 
+const logoutBtn = document.querySelector('.logoutBtn');
+logoutBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    fetch('/dev/api/logout', {
+        method: 'POST',
+        credentials: "include",
+    })
+        .then((response) => response.json())
+        .then((json) => { return json.data })
+        .then((data) => {
+            window.location.href = "/dev/Index.html"
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+});
+
+
 $.urlParam = function (name) {
     var results = new RegExp('[\?&]' + name + '=([^&#]*)')
         .exec(window.location.search);
@@ -43,8 +71,6 @@ $('#commentsContainer').comments({
             cache: false
         }).done(function (data) {
 
-            console.log(data);
-
             $('#img').attr("src", data.data.urlLink);
 
             renderData(data.data);
@@ -58,34 +84,25 @@ $('#commentsContainer').comments({
             async: true,
             cache: false
         }).done(function (data) {
+            console.log(data);
 
             success(data.data.commentResult);
 
             commentData = data.data.commentResult;
 
-            talData = data.data.talDetails;
+            userData = data.data.Subscription;
 
-            for (var i = 0; i < commentData.length; i++) {
-                if (commentData[i].createdByCurrentUser === true) {
-                    if (commentData[i].Subscription === "Paid") {
-                        $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'true');
-                        $('#commentsContainer .data-container .action').prop('disabled', false);
-                        break;
-                    }
-                    else {
-                        $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'false');
-                        $('#commentsContainer .data-container .action').prop('disabled', true);
-                        break;
-                    }
-                }
-                else {
-                    continue;
-                }
+            if (userData === "Paid") {
+                $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'true');
+                $('#commentsContainer .data-container .action').prop('disabled', false);
             }
-        })//End of ajax().done()
 
+            else {
+                $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'false');
+                $('#commentsContainer .data-container .action').prop('disabled', true);
+            }
 
-
+        }) //End of ajax().done()
 
     },
     postComment: function (commentJSON, success, error) {
