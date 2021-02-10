@@ -3,6 +3,34 @@
 
 // Write your JavaScript code.
 
+// Check if session cookie is present
+let re = new RegExp('(?<=session=)[^ ;]+');
+var session_token = document.cookie.toString().match(re);
+if (session_token !== null){
+    $('.loginBtn').css('display', 'none');
+    $('.createTalent').css('display', 'block');
+    $('.manageBillBtn').css('display', 'block');
+    $('.logoutBtn').css('display', 'block');
+}
+
+//LOGOUT
+const logoutBtn = document.querySelector('.logoutBtn');
+logoutBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    fetch('/dev/api/logout', {
+        method: 'POST',
+        credentials: "include",
+    })
+        .then((response) => response.json())
+        .then((json) => { return json.data })
+        .then((data) => {
+            window.location.href = "/dev/Index.html"
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+});
+
 // UPLOAD Method
 $("#submitTalent").click((e) => {
     e.preventDefault();
@@ -19,7 +47,7 @@ $("#submitTalent").click((e) => {
         formData.append("talentBio", talentBio);
 
         $.ajax({
-            url: "https://7aitolysoe.execute-api.us-east-1.amazonaws.com/dev/api/uploadImage",
+            url: "https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/api/uploadImage",
             method: "POST",
             processData: false,
             contentType: false,
@@ -42,7 +70,7 @@ $('#search').keyup(function () {
     //var urlForJson = "data.json";
 
     //get data from Restful web Service in development environment
-    var urlForJson = "https://ab4z15tt79.execute-api.us-east-1.amazonaws.com/dev/api/getAllTalents";
+    var urlForJson = "https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/api/getAllTalents";
 
     //Url for the Cloud image hosting
     var urlForCloudImage = "https://csc-assignment-photo-bucket-teh.s3.amazonaws.com/";

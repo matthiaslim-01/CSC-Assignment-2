@@ -5,7 +5,7 @@ from logging import log
 from lib.debugtest import debug_test
 from lib.constants import ALLOWED_ORIGINS
 from lib.webexception import WebException
-from lib.controllers.auth_controller import oauth_redirect
+from lib.controllers.auth_controller import logout, oauth_redirect
 from lib.controllers.payments_controller import (
     create_checkout_session,
     customer_portal,
@@ -31,6 +31,7 @@ APILIST = {
         "customer-portal": customer_portal,
         "webhook": webhook_received,
         "create-comment": create_comment,
+        "logout": logout
         # "uploadImage": uploadImage,
         # "updateTalent": updateTalent,
         # "deleteTalent": deleteTalent,
@@ -89,6 +90,7 @@ class Request:
             "customer-portal",
             "create-comment",
             "checkout-session",
+            "logout",
         ]:
             print("Logged In Method Invoked")
             self.username = get_session_username(self.session_token)

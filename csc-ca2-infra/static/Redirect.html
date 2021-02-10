@@ -28,10 +28,18 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="Privacy.html">Privacy</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" href="Upload.html">Create Talent</a>
-                        </li>
                     </ul>
+                </div>
+                <div class="d-flex">
+                    <div class="nav-item">
+                        <a class="loginBtn btn btn-primary" href="https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=513953757456-r1tjdsp0r9o8ncui2ocssfeo50tcdb4p.apps.googleusercontent.com&scope=openid%20profile%20email&redirect_uri=https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/Redirect.html">Login with Google</a>
+                    </div>
+                    <div class="nav-item pr-2">
+                        <a class="manageBillBtn btn btn-info" href="/" style="display: none;">Manage Billing</a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="logoutBtn btn btn-primary" href="/" style="display: none;">Log Out</a>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -50,8 +58,8 @@
     <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/site.js?v=4q1jwFhaPaZgr8WAUSrux6hAuh0XDg9kPS3xIVq36I0"></script>
     <script>
-        let re = new RegExp('(?<=code=)[^&]+');
-        let code_grant = window.location.toString().match(re)[0];
+        let re_cg = new RegExp('(?<=code=)[^&]+');
+        let code_grant = window.location.toString().match(re_cg)[0];
         data = {"code_grant": code_grant}
         fetch("/dev/api/oauth-redirect", {
                 credentials: "include",

@@ -100,8 +100,11 @@
             fetch("/dev/api/checkout-session?sessionId=" + sessionId, {
                 credentials: "include"
             })
-                .then(function (result) {
-                    return result.json();
+                .then(function (response) {
+                    if(!response.ok){
+                        throw Error(response.statusText);
+                    }
+                    return response.json();
                 })
                 .then((json) => { return json.data })
                 .then(function (session) {
