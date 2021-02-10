@@ -9,6 +9,7 @@ def get_comments(request, response):
     data = request.data
 
     commentList = []
+    talentList = []
     connection = pymysql.connect(
         host=os.environ["RDS_HOST"],
         user=os.environ["RDS_USER"],
@@ -21,9 +22,10 @@ def get_comments(request, response):
         with connection:
 
             createdBy = ""
+            subscriptionType = ""
             createdByCurrentUser = True
 
-            getCommentOfTalent = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, UrlLink, Name, Bio, FullName from talent t, comment_management c, user u where c.TalentId = {data['talentId']} and c.TalentId = t.TalentId and u.Id = c.UserId;"
+            getCommentOfTalent = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, UrlLink, Name, Bio, FullName, us.Subscription from talent t, comment_management c, users u, user_subscription us where c.TalentId = {data['talentId']} and c.TalentId = t.TalentId and u.Id = c.UserId and u.Subscription = us.Id;"
 
             cur = connection.cursor(pymysql.cursors.DictCursor)
             cur.execute(getCommentOfTalent)
@@ -34,30 +36,11 @@ def get_comments(request, response):
                     if oneComment["UserId"] == int(data["userId"]):
                         createdBy = "You"
                         createdByCurrentUser = True
+                        subscriptionType = oneComment["Subscription"]
                     else:
                         createdBy = oneComment["FullName"]
                         createdByCurrentUser = False
-
-                    commentDict = {
-                        "id": int(oneComment["CommentId"]),
-                        "createdByCurrentUser": createdByCurrentUser,
-                        "content": oneComment["Comment"],
-                        "fullname": createdBy,
-                        "parent": int(oneComment["ParentId"]),
-                        "created": oneComment["CreatedAt"],
-                        "modified": oneComment["UpdatedAt"],
-                        "UrlLink": oneComment["UrlLink"],
-                        "Name": oneComment["Name"],
-                        "Bio": oneComment["Bio"],
-                    }
-                    commentList.append(commentDict)
-                else:
-                    if oneComment["UserId"] == int(data["userId"]):
-                        createdBy = "You"
-                        createdByCurrentUser = True
-                    else:
-                        createdBy = oneComment["FullName"]
-                        createdByCurrentUser = False
+                        subscriptionType = oneComment["Subscription"]
 
                     commentDict = {
                         "id": int(oneComment["CommentId"]),
@@ -65,15 +48,50 @@ def get_comments(request, response):
                         "content": oneComment["Comment"],
                         "fullname": createdBy,
                         "parent": None,
-                        "created": oneComment["CreatedAt"],
-                        "modified": oneComment["UpdatedAt"],
+                        "created": str(oneComment["CreatedAt"]),
+                        "modified": str(oneComment["UpdatedAt"]),
+                        "Subscription": subscriptionType,
+                    }
+
+                    talentDetails = {
                         "UrlLink": oneComment["UrlLink"],
                         "Name": oneComment["Name"],
                         "Bio": oneComment["Bio"],
                     }
                     commentList.append(commentDict)
-                    response.body = commentList
-                    cur.close()
+                    talentList.append(talentDetails)
+                else:
+                    if oneComment["UserId"] == int(data["userId"]):
+                        createdBy = "You"
+                        createdByCurrentUser = True
+                        subscriptionType = oneComment["Subscription"]
+
+                    else:
+                        createdBy = oneComment["FullName"]
+                        createdByCurrentUser = False
+                        subscriptionType = oneComment["Subscription"]
+
+                    commentDict = {
+                        "id": int(oneComment["CommentId"]),
+                        "createdByCurrentUser": createdByCurrentUser,
+                        "content": oneComment["Comment"],
+                        "fullname": createdBy,
+                        "parent": None,
+                        "created": str(oneComment["CreatedAt"]),
+                        "modified": str(oneComment["UpdatedAt"]),
+                        "Subscription": subscriptionType,
+                    }
+
+                    talentDetails = {
+                        "UrlLink": oneComment["UrlLink"],
+                        "Name": oneComment["Name"],
+                        "Bio": oneComment["Bio"],
+                    }
+                    commentList.append(commentDict)
+                    talentList.append(talentDetails)
+
+            cur.close()
+            response.body = {"commentResult": commentList, "talDetails": talentList}
             return response
 
     except Exception as e:
@@ -84,12 +102,13 @@ def create_comment(request, response):
     data = request.data
     now = datetime.now()
     count = 0
+    paId = ""
 
     connection = pymysql.connect(
-        host=os.environ["HOST"],
-        user=os.environ["USER"],
-        password=os.environ["PASSWORD"],
-        database=os.environ["DATABASE"],
+        host=os.environ["RDS_HOST"],
+        user=os.environ["RDS_USER"],
+        password=os.environ["RDS_PASSWORD"],
+        database=os.environ["RDS_DATABASE"],
     )
 
     try:
@@ -97,10 +116,10 @@ def create_comment(request, response):
             insert_comment_query = "Insert into comment_management (UserId, TalentId, Comment, ParentId, CreatedAt, UpdatedAt) Values (%s, %s, %s, %s, %s, %s);"
             userId = int(data["userId"])
             comment = data["content"]
-            createdAt = now.strftime("%d/%m/%Y %H:%M:%S")
-            updatedAt = now.strftime("%d/%m/%Y %H:%M:%S")
+            createdAt = now.strftime("%Y-%m-%d %H:%M:%S")
+            updatedAt = now.strftime("%Y-%m-%d %H:%M:%S")
             parentId = 0
-            if str(data["parent"]) != "":
+            if not data["parent"] is None:
                 parentId = int(data["parent"])
             else:
                 parentId = None
@@ -118,13 +137,18 @@ def create_comment(request, response):
             id = [id[0] for id in commentId]
 
             if count == 1:
-                get_new_comment_query = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, UrlLink, Name, Bio, FullName from talent t, comment_management c, user u where c.TalentId = t.TalentId and u.Id = c.UserId and CommentId = {id[0]} and c.TalentId = {data['talentId']};"
+
+                get_new_comment_query = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, UrlLink, Name, Bio, FullName, us.Subscription from talent t, comment_management c, users u, user_subscription us where c.TalentId = {data['talentId']} and CommentId = {id[0]} and c.TalentId = t.TalentId and u.Id = c.UserId and u.Subscription = us.Id;"
 
                 cur = connection.cursor(pymysql.cursors.DictCursor)
                 cur.execute(get_new_comment_query)
                 comment_result = cur.fetchall()
-                oneResult = comment_result[0]
 
+                oneResult = comment_result[0]
+                if oneResult["ParentId"] is None:
+                    paId = None
+                else:
+                    paId = int(oneResult["ParentId"])
                 createdBy = ""
                 createdByCurrentUser = True
                 if int(oneResult["UserId"]) == int(data["userId"]):
@@ -136,17 +160,17 @@ def create_comment(request, response):
 
                 commentDict = {
                     "id": int(oneResult["CommentId"]),
-                    "parent": int(oneResult["ParentId"]),
+                    "parent": paId,
                     "content": oneResult["Comment"],
                     "fullname": createdBy,
-                    "created": oneResult["CreatedAt"],
-                    "modified": oneResult["UpdatedAt"],
+                    "created": str(oneResult["CreatedAt"]),
+                    "modified": str(oneResult["UpdatedAt"]),
                     "createdByCurrentUser": createdByCurrentUser,
                 }
                 response.body = commentDict
+
                 cur.close()
-            return response
+                return response
 
     except Exception as e:
         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
-

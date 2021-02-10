@@ -5,6 +5,9 @@ $.urlParam = function (name) {
     return (results !== null) ? results[1] || 0 : false;
 }
 
+$('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'false');
+$('#commentsContainer .data-container .action').prop('disabled', true);
+
 $('#commentsContainer').comments({
     textareaPlaceholderText: 'Leave a comment',
     enableEditing: true,
@@ -27,29 +30,50 @@ $('#commentsContainer').comments({
             cache: false
         }).done(function (data) {
             console.log(data);
+            console.log(data.data.commentResult);
+            $('#img').attr("src", data.data.talDetails[0].UrlLink);
+            success(data.data.commentResult);
 
-            success(data);
+            data = data.data.commentResult;
 
+            for (var i = 0; i < data.length; i++) {
+                console.log(data[i].createdByCurrentUser === true)
+                if (data[i].createdByCurrentUser === true) {
+                    if (data[i].Subscription === "Paid") {
+                        $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'true');
+                        $('#commentsContainer .data-container .action').prop('disabled', false);
+                        break;
+                    }
+                    else {
+                        $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'false');
+                        $('#commentsContainer .data-container .action').prop('disabled', true);
+                        break;
+                    }
+                }
+                else {
+                    continue;
+                }
+            }
         })//End of ajax().done()
 
-        $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'false')
-        $('#commentsContainer .data-container .action').prop('disabled', true)
+
 
 
     },
     postComment: function (commentJSON, success, error) {
         console.dir(commentJSON);
 
-        // commentJSON["userId"] = customerAccountID
-        // commentJSON["talentId"] =
+        commentJSON["userId"] = $.urlParam('userId')
+        commentJSON["talentId"] = $.urlParam('talentId')
         console.dir(commentJSON)
 
         $.ajax({
             method: 'POST',
-            url: 'https://2v4tslm6qk.execute-api.us-east-1.amazonaws.com/dev/api/create-comments',
-            data: commentJSON,
+            url: 'https://2v4tslm6qk.execute-api.us-east-1.amazonaws.com/dev/api/create-comment',
+            data: JSON.stringify(commentJSON),
             success: function (comment) {
-                success(comment)
+                console.log(comment);
+                success(comment.data);
                 //console.dir(comment);
             },
             error: error
