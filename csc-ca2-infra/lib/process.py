@@ -5,7 +5,7 @@ from logging import log
 from lib.debugtest import debug_test
 from lib.constants import ALLOWED_ORIGINS
 from lib.webexception import WebException
-from lib.controllers.auth_controller import login, register
+from lib.controllers.auth_controller import oauth_redirect
 from lib.controllers.payments_controller import (
     create_checkout_session,
     customer_portal,
@@ -15,7 +15,8 @@ from lib.controllers.payments_controller import (
 )
 from lib.services.dynamodb_service import get_session_username, get_subscription_plan
 from lib.controllers.comment_management_controller import get_comments, create_comment
-from lib.controllers.crud_controller import uploadImage, updateTalent, deleteTalent
+
+# from lib.controllers.crud_controller import uploadImage, updateTalent, deleteTalent
 
 APILIST = {
     "GET": {
@@ -25,15 +26,14 @@ APILIST = {
         # "get-comments": get_comments,
     },
     "POST": {
-        "login": login,
-        "register": register,
+        "oauth-redirect": oauth_redirect,
         "create-checkout-session": create_checkout_session,
         "customer-portal": customer_portal,
         "webhook": webhook_received,
         "create-comment": create_comment,
-        "uploadImage": uploadImage,
-        "updateTalent": updateTalent,
-        "deleteTalent": deleteTalent,
+        # "uploadImage": uploadImage,
+        # "updateTalent": updateTalent,
+        # "deleteTalent": deleteTalent,
     },
 }
 

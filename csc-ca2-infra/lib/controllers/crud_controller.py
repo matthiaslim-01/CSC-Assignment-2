@@ -1,208 +1,208 @@
-# boto3 for connection to S3.
-import boto3
-from botocore.exceptions import ClientError
-# logging for logging.
-import logging
-# uuid for creating Universally Unique IDs.
-import uuid
-# imghdr for image validation.
-import imghdr
-# pymysql for mySql connection.
-import pymysql
-# base64 for base 64 encoding/decoding.
-import base64
-# io for dealing with file objects with different I/O.
-import io
-# lib.webexception for raising web exception when an error occurs.
-from lib.webexception import WebException
-# http for usage of HttpStatusCodes.
-from http import HTTPStatus
-# google.cloud for the usage of Cloud Vision to detect faces.
-from google.cloud import vision
-# os for usage of envionment variables.
-import os
+# # boto3 for connection to S3.
+# import boto3
+# from botocore.exceptions import ClientError
+# # logging for logging.
+# import logging
+# # uuid for creating Universally Unique IDs.
+# import uuid
+# # imghdr for image validation.
+# import imghdr
+# # pymysql for mySql connection.
+# import pymysql
+# # base64 for base 64 encoding/decoding.
+# import base64
+# # io for dealing with file objects with different I/O.
+# import io
+# # lib.webexception for raising web exception when an error occurs.
+# from lib.webexception import WebException
+# # http for usage of HttpStatusCodes.
+# from http import HTTPStatus
+# # google.cloud for the usage of Cloud Vision to detect faces.
+# from google.cloud import vision
+# # os for usage of envionment variables.
+# import os
 
-import json
+# import json
 
-"""
-TODO
-Validations before upload
-    File must be an image file
-    Image must contain human face
+# """
+# TODO
+# Validations before upload
+#     File must be an image file
+#     Image must contain human face
 
-POST method (Create)
-    Send image file to S3 bucket
-    Send link, talent_name and talent_description to mySql.
+# POST method (Create)
+#     Send image file to S3 bucket
+#     Send link, talent_name and talent_description to mySql.
 
-PUT method (Update)
-    Note: image, talent_name and talent_description can be changed.
-        Make sure whether changing image will change the URL.
-    Basically, strip Upload method and reassemble to fit.
+# PUT method (Update)
+#     Note: image, talent_name and talent_description can be changed.
+#         Make sure whether changing image will change the URL.
+#     Basically, strip Upload method and reassemble to fit.
 
-GET method (Read)
-    GET all
-        Retrieve all values from mySql.
-    GET by related search terms
-        Search function to sift through via related terms in talent_name and talent_description.
+# GET method (Read)
+#     GET all
+#         Retrieve all values from mySql.
+#     GET by related search terms
+#         Search function to sift through via related terms in talent_name and talent_description.
 
-DELETE method (Delete)
-    Delete said talent's image in S3 bucket, image link, talent_name and talent_description in mySql.
-"""
+# DELETE method (Delete)
+#     Delete said talent's image in S3 bucket, image link, talent_name and talent_description in mySql.
+# """
 
-def init_client(): 
-    try:
-        return boto3.client('s3', region_name='us-east-1')
-    except ClientError as e:
-        logging.error("init_client -- %s", e)
-        raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
+# def init_client():
+#     try:
+#         return boto3.client('s3', region_name='us-east-1')
+#     except ClientError as e:
+#         logging.error("init_client -- %s", e)
+#         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
 
-def containsHumanFace(base64):
-    client = vision.ImageAnnotationClient()
-    # Set confidence level after done.
-    content = base64.read()
-    image = vision.Image(content=content)
-    CVResponse = client.face_detection(image=image)
-    faces = CVResponse.face_annotations
-    confidence = int(faces.detectionConfidence)
+# def containsHumanFace(base64):
+#     client = vision.ImageAnnotationClient()
+#     # Set confidence level after done.
+#     content = base64.read()
+#     image = vision.Image(content=content)
+#     CVResponse = client.face_detection(image=image)
+#     faces = CVResponse.face_annotations
+#     confidence = int(faces.detectionConfidence)
 
-    if (confidence >= 0.7):
-        logging.info("containsHumanFace -- Image contains Human Face: Passed")
-        return True
-    else:
-        logging.error("containsHumanFace -- Image contains Human Face: Failed")
-        return False
+#     if (confidence >= 0.7):
+#         logging.info("containsHumanFace -- Image contains Human Face: Passed")
+#         return True
+#     else:
+#         logging.error("containsHumanFace -- Image contains Human Face: Failed")
+#         return False
 
-def uploadToSql(query):
-    # Connection to mySql server
-    connection = pymysql.connect(host=os.environ["HOST"], user=os.environ["USER"], password=os.environ["PASSWORD"], database=os.environ["DATABASE"])
-    logging.info("uploadToSql -- Connection to mySql server successful!")
+# def uploadToSql(query):
+#     # Connection to mySql server
+#     connection = pymysql.connect(host=os.environ["HOST"], user=os.environ["USER"], password=os.environ["PASSWORD"], database=os.environ["DATABASE"])
+#     logging.info("uploadToSql -- Connection to mySql server successful!")
 
-    try:
-        cur = connection.cursor()
-        cur.execute(query)
-        logging.info("uploadToSql -- Insert query executed.")
+#     try:
+#         cur = connection.cursor()
+#         cur.execute(query)
+#         logging.info("uploadToSql -- Insert query executed.")
 
-    except ClientError as e:
-        logging.error(e)
-        return False
+#     except ClientError as e:
+#         logging.error(e)
+#         return False
 
-    finally:
-        logging.info("uploadToSql -- Closing mySql connection")
-        connection.close()
+#     finally:
+#         logging.info("uploadToSql -- Closing mySql connection")
+#         connection.close()
 
-    return True
+#     return True
 
-def getUUID(URL):
-    # Get UUID of target Talent for deletion
-    splicedUUID = URL.split("/")[-1]
-    logging.info("getUUID -- Target UUID: %s", splicedUUID)
-    return splicedUUID
+# def getUUID(URL):
+#     # Get UUID of target Talent for deletion
+#     splicedUUID = URL.split("/")[-1]
+#     logging.info("getUUID -- Target UUID: %s", splicedUUID)
+#     return splicedUUID
 
-def getAllTalents(request, response):
-    connection = pymysql.connect(host=os.environ["HOST"], user=os.environ["USER"], password=os.environ["PASSWORD"], database=os.environ["DATABASE"])
-    logging.info("getAllTalents -- Connection to mySql server successful!")
-    try:
-        cur = connection.cursor()
-        rows = cur.fetchall()
-        allTalentsJson = json.dumps(rows)
-        response.body = allTalentsJson
-        return response
-        
-    except ClientError as e:    
-        logging.error(e)
-        raise WebException(status_code=HTTPStatus.BAD_REQUEST, message="uploadImage -- File failed Validations.")
-    finally:
-        logging.info("uploadToSql -- Closing mySql connection")
-        connection.close()
+# def getAllTalents(request, response):
+#     connection = pymysql.connect(host=os.environ["HOST"], user=os.environ["USER"], password=os.environ["PASSWORD"], database=os.environ["DATABASE"])
+#     logging.info("getAllTalents -- Connection to mySql server successful!")
+#     try:
+#         cur = connection.cursor()
+#         rows = cur.fetchall()
+#         allTalentsJson = json.dumps(rows)
+#         response.body = allTalentsJson
+#         return response
 
-def uploadImage(request, response):
-    # Load file
-    data = request.data
-    file = data["photo"]
-    image = base64.b64decode(str(file))
+#     except ClientError as e:
+#         logging.error(e)
+#         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message="uploadImage -- File failed Validations.")
+#     finally:
+#         logging.info("uploadToSql -- Closing mySql connection")
+#         connection.close()
 
-    # Validations
-    if (containsHumanFace(file) == False):
-        raise WebException(status_code=HTTPStatus.BAD_REQUEST, message="uploadImage -- File failed Validations.")
+# def uploadImage(request, response):
+#     # Load file
+#     data = request.data
+#     file = data["photo"]
+#     image = base64.b64decode(str(file))
 
-    # Setting UUID for this file
-    objectKey = str(uuid.uuid4())
-    logging.info("uploadImage -- New UUID: %s", objectKey)
+#     # Validations
+#     if (containsHumanFace(file) == False):
+#         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message="uploadImage -- File failed Validations.")
 
-    # Setting other values
-    talent_name = data["talentName"]
-    talent_bio = data["talentBio"]
-    # UPDATE THIS 2 VARIABLES TO NOT BE HARDCODED
-    bucketName = "csc-assignment-photo-bucket-teh"
-    bucketRegion = "us-east-1"
+#     # Setting UUID for this file
+#     objectKey = str(uuid.uuid4())
+#     logging.info("uploadImage -- New UUID: %s", objectKey)
 
-    try:
-        # Uploading file to S3
-        s3Response = init_client().upload_fileobj(image, bucketName, objectKey)
-        logging.info("uploadImage -- S3 Upload response: %s", s3Response)
+#     # Setting other values
+#     talent_name = data["talentName"]
+#     talent_bio = data["talentBio"]
+#     # UPDATE THIS 2 VARIABLES TO NOT BE HARDCODED
+#     bucketName = "csc-assignment-photo-bucket-teh"
+#     bucketRegion = "us-east-1"
 
-        # Set the s3 URL to current Image
-        URL = "https://" + bucketName + ".s3." + bucketRegion + ".amazonaws.com/" + objectKey
+#     try:
+#         # Uploading file to S3
+#         s3Response = init_client().upload_fileobj(image, bucketName, objectKey)
+#         logging.info("uploadImage -- S3 Upload response: %s", s3Response)
 
-        # Upload to mySql table
-        insertQuery = "INSERT INTO talent (UrlLink, Name, Bio) VALUES (%s, %s, %s)", (URL, talent_name, talent_bio)
-        uploadToSql(insertQuery)
+#         # Set the s3 URL to current Image
+#         URL = "https://" + bucketName + ".s3." + bucketRegion + ".amazonaws.com/" + objectKey
 
-    except ClientError as e:
-        logging.error("uploadImage -- %s", e)
-        raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
+#         # Upload to mySql table
+#         insertQuery = "INSERT INTO talent (UrlLink, Name, Bio) VALUES (%s, %s, %s)", (URL, talent_name, talent_bio)
+#         uploadToSql(insertQuery)
 
-    return response
+#     except ClientError as e:
+#         logging.error("uploadImage -- %s", e)
+#         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
 
-def updateTalent(request, response):
-    data = request.data
-    file = data["inputFiles"]
-    image = base64.b64decode(str(file))
-    URL = data["url"]
-    targetKey = getUUID(URL)
+#     return response
 
-    # Setting other values
-    talent_name = data["talentName"]
-    talent_bio = data["talentBio"]
-    # UPDATE THIS 2 VARIABLES TO NOT BE HARDCODED
-    bucketName = "csc-assignment-photo-bucket-teh"
-    bucketRegion = "us-east-1"
+# def updateTalent(request, response):
+#     data = request.data
+#     file = data["inputFiles"]
+#     image = base64.b64decode(str(file))
+#     URL = data["url"]
+#     targetKey = getUUID(URL)
 
-    try:
-        s3Response = init_client().upload_fileobj(image, bucketName, targetKey)
-        logging.info("updateTalentImage -- S3 Update response: %s", s3Response)
+#     # Setting other values
+#     talent_name = data["talentName"]
+#     talent_bio = data["talentBio"]
+#     # UPDATE THIS 2 VARIABLES TO NOT BE HARDCODED
+#     bucketName = "csc-assignment-photo-bucket-teh"
+#     bucketRegion = "us-east-1"
 
-        # Set the s3 URL to current Image
-        URL = "https://" + bucketName + ".s3." + bucketRegion + ".amazonaws.com/" + targetKey
+#     try:
+#         s3Response = init_client().upload_fileobj(image, bucketName, targetKey)
+#         logging.info("updateTalentImage -- S3 Update response: %s", s3Response)
 
-        # Update mySql table
-        updateQuery = "UPDATE talent SET UrlLink='%s', Name='%s', Bio='%s' WHERE UrlLink LIKE '%s'", (URL, talent_name, talent_bio, targetKey)
-        uploadToSql(updateQuery)
+#         # Set the s3 URL to current Image
+#         URL = "https://" + bucketName + ".s3." + bucketRegion + ".amazonaws.com/" + targetKey
 
-    except ClientError as e:
-        logging.error("updateTalentImage -- %s", e)
-        raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
+#         # Update mySql table
+#         updateQuery = "UPDATE talent SET UrlLink='%s', Name='%s', Bio='%s' WHERE UrlLink LIKE '%s'", (URL, talent_name, talent_bio, targetKey)
+#         uploadToSql(updateQuery)
 
-    return response
+#     except ClientError as e:
+#         logging.error("updateTalentImage -- %s", e)
+#         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
 
-def deleteTalent(request, response):
-    data = request.data
-    URL = data["url"]
-    targetKey = getUUID(URL)
+#     return response
 
-    # UPDATE THIS VARIABLE TO NOT BE HARDCODED
-    bucketName = "csc-assignment-photo-bucket-teh"
+# def deleteTalent(request, response):
+#     data = request.data
+#     URL = data["url"]
+#     targetKey = getUUID(URL)
 
-    try:
-        s3Response = init_client().delete_object(bucketName, targetKey)
-        logging.info("deleteTalent -- S3 Delete response: %s", s3Response)
-        
-        # Delete mySql table
-        deleteQuery = "DELETE FROM talents WHERE UrlLink LIKE '%s'", (targetKey)
-        uploadToSql(deleteQuery)
+#     # UPDATE THIS VARIABLE TO NOT BE HARDCODED
+#     bucketName = "csc-assignment-photo-bucket-teh"
 
-    except ClientError as e:
-        logging.error("deleteTalent -- %s", e)
-        raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
+#     try:
+#         s3Response = init_client().delete_object(bucketName, targetKey)
+#         logging.info("deleteTalent -- S3 Delete response: %s", s3Response)
 
-    return response
+#         # Delete mySql table
+#         deleteQuery = "DELETE FROM talents WHERE UrlLink LIKE '%s'", (targetKey)
+#         uploadToSql(deleteQuery)
+
+#     except ClientError as e:
+#         logging.error("deleteTalent -- %s", e)
+#         raise WebException(status_code=HTTPStatus.BAD_REQUEST, message=str(e)) from e
+
+#     return response

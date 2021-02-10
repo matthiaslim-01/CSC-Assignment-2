@@ -10,10 +10,10 @@ def get_comments(request, response):
 
     commentList = []
     connection = pymysql.connect(
-        host=os.environ["HOST"],
-        user=os.environ["USER"],
-        password=os.environ["PASSWORD"],
-        database=os.environ["DATABASE"],
+        host=os.environ["RDS_HOST"],
+        user=os.environ["RDS_USER"],
+        password=os.environ["RDS_PASSWORD"],
+        database=os.environ["RDS_DATABASE"],
     )
 
     try:

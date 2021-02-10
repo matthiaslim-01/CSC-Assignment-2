@@ -11,5 +11,6 @@ toml
 urllib3
 Werkzeug
 pymysql
-google-cloud
-google-cloud-vision
+# google-cloud
+# google-cloud-vision
+pyjwt

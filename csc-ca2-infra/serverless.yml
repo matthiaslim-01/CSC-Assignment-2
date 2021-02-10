@@ -1,6 +1,6 @@
 service: csc-ca2-infra
 
-frameworkVersion: '2'
+frameworkVersion: "2"
 
 provider:
   name: aws
@@ -46,7 +46,7 @@ provider:
 functions:
   backend:
     handler: handlers/backend.handler
-    events: 
+    events:
       - http:
           path: /api/{proxy+}
           method: any
@@ -58,13 +58,15 @@ functions:
       PRO_PRICE_ID: ${self:custom.envfile.pro_price_id, ''}
       URL: ${self:custom.envfile.stripe_url, ''}
       STRIPE_API_VERSION: ${self:custom.envfile.stripe_api_version, ''}
-      HOST: ${self:custom.envfile.host, ''}
-      USER: ${self:custom.envfile.user, ''}
-      PASSWORD: ${self:custom.envfile.password, ''}
-      DATABASE: ${self:custom.envfile.database, ''}
+      RDS_HOST: ${self:custom.envfile.rds_host, ''}
+      RDS_USER: ${self:custom.envfile.rds_user, ''}
+      RDS_PASSWORD: ${self:custom.envfile.rds_password, ''}
+      RDS_DATABASE: ${self:custom.envfile.rds_database, ''}
+      OAUTH_CLIENT_ID: ${self:custom.envfile.oauth_client_id, ''}
+      OAUTH_CLIENT_SECRET: ${self:custom.envfile.oauth_client_secret, ''}
   frontend:
     handler: handlers/frontend.handler
-    events: 
+    events:
       - http:
           path: /
           method: any
@@ -120,19 +122,18 @@ plugins:
 custom:
   envfile: ${file(env.yml)}
   serverless-layers:
-    layersDeploymentBucket: 
+    layersDeploymentBucket: csc-ca2-layers-dep-matt2 # Bucket name to be changed
     packageManager: pip
-    dependenciesPath:  requirements.txt
+    dependenciesPath: requirements.txt
   assets:
-    auto: true
+    # auto: true
     targets:
-      - bucket: 
+      - bucket: csc-assignment-2-static-test2
         empty: true
         files:
-        - source: static/
-          globs: 
-            - '**/*'
-
+          - source: static/
+            globs:
+              - "**/*"
 
 resources:
   Resources:
@@ -151,45 +152,65 @@ resources:
                   - lambda.amazonaws.com
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
-        # Policies:
-          # - PolicyName: s3-access
-          #   PolicyDocument:
-          #     Version: "2012-10-17"
-          #     Statement:
-          #       - Effect: Allow
-          #         Action:
-          #           - s3:GetObjects
-          #         Resource:
-          #           - Fn::Join:
-          #             - ":"
-          #             - - arn:aws:s3:
-          #               - ${self:provider.region}
-          #               - Ref: AWS::AccountId
-          #               - exmaplebucket
-    CognitoUserPool:
-      Type: AWS::Cognito::UserPool
-      Properties:
-        UserPoolName: User-Pool-${self:provider.stage}
         Policies:
-          PasswordPolicy:
-            MinimumLength: 8
-            RequireUppercase: true
-            RequireSymbols: true
-        UsernameAttributes:
-          - email
-        Schema:
-          - AttributeDataType: String
-            Name: email
-            Required: false
-    
-    CognitoPoolClient:
-        Type: AWS::Cognito::UserPoolClient
-        Properties:
-          ClientName: Pool-Client-${self:provider.stage}      
-          UserPoolId:
-            Ref: CognitoUserPool 
-          GenerateSecret: false
-            
+          - PolicyName: dynamodb-access
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - dynamodb:GetItem
+                    - dynamodb:PutItem
+                    - dynamodb:DeleteItem
+                  Resource:
+                    - Fn::Join:
+                        - ":"
+                        - - arn:aws:dynamodb
+                          - ${self:provider.region}
+                          - Ref: AWS::AccountId
+                          - table/user-info-dev
+                    - Fn::Join:
+                        - ":"
+                        - - arn:aws:dynamodb
+                          - ${self:provider.region}
+                          - Ref: AWS::AccountId
+                          - table/session-info-dev
+        #   PolicyDocument:
+        #     Version: "2012-10-17"
+        #     Statement:
+        #       - Effect: Allow
+        #         Action:
+        #           - s3:GetObjects
+        #         Resource:
+        #           - Fn::Join:
+        #             - ":"
+        #             - - arn:aws:s3:
+        #               - ${self:provider.region}
+        #               - Ref: AWS::AccountId
+        #               - examplebucket
+
+    PhotoBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: csc-assignment-2-photo-bucket-matt # Bucket name to be changed
+        AccessControl: PublicRead
+
+    PhotoBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: !Join
+                - ""
+                - - "arn:aws:s3:::"
+                  - !Ref PhotoBucket
+                  - /*
+        Bucket: !Ref PhotoBucket
+
     UserInfoTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -205,29 +226,6 @@ resources:
           ReadCapacityUnits: 10
           WriteCapacityUnits: 10
 
-    PhotoBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: 
-        AccessControl: PublicRead
-    
-    PhotoBucketPolicy:
-      Type: AWS::S3::BucketPolicy
-      Properties:
-        PolicyDocument:
-          Statement:
-            - Sid: PublicReadForGetBucketObjects
-              Effect: Allow
-              Principal: '*'
-              Action: 's3:GetObject'
-              Resource: !Join 
-                - ''
-                - - 'arn:aws:s3:::'
-                  - !Ref PhotoBucket
-                  - /*
-        Bucket: !Ref PhotoBucket
-          
-          
     SeshInfoTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -238,7 +236,7 @@ resources:
         KeySchema:
           - AttributeName: sessionToken
             KeyType: HASH
-        TimeToLiveSpecification: 
+        TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
         BillingMode: PROVISIONED
@@ -249,34 +247,34 @@ resources:
     CscAssignment2DBInstance:
       Type: AWS::RDS::DBInstance
       Properties:
-        DBName: ${self:custom.envfile.database, ''}${self:provider.stage}
+        DBName: ${self:custom.envfile.rds_database, ''}${self:provider.stage}
         AllocatedStorage: 10
         Engine: mysql
         EngineVersion: 5.7
-        MasterUsername: ${self:custom.envfile.user, ''}
+        MasterUsername: ${self:custom.envfile.rds_user, ''}
         DBInstanceClass: db.t3.small
-        MasterUserPassword: ${self:custom.envfile.password, ''}
+        MasterUserPassword: ${self:custom.envfile.rds_password, ''}
         VPCSecurityGroups:
-        - !GetAtt DBEC2SecurityGroup.GroupId
+          - !GetAtt DBEC2SecurityGroup.GroupId
     DBEC2SecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
         GroupDescription: Open database for access
         SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: '3306'
-          ToPort: '3306'
-          SourceSecurityGroupId: ${self:custom.envfile.sg_id, ''}
+          - IpProtocol: tcp
+            FromPort: "3306"
+            ToPort: "3306"
+            SourceSecurityGroupId: ${self:custom.envfile.rds_sg_id, ''}
 
   Outputs:
     UserInfoTableARN:
-      Value: 
+      Value:
         Fn::GetAtt:
-        - UserInfoTable
-        - Arn
+          - UserInfoTable
+          - Arn
 
     SeshInfoTableARN:
-      Value: 
+      Value:
         Fn::GetAtt:
-        - SeshInfoTable
-        - Arn
+          - SeshInfoTable
+          - Arn

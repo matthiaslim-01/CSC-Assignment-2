@@ -29,12 +29,12 @@ def handler(event, context):
     try:
         s3objectkey = unquote_plus(path, encoding="utf-8")
         s3object = s3client.get_object(
-            Bucket="csc-ca2-static-ger", Key=s3objectkey
+            Bucket="csc-assignment-2-static-test2", Key=s3objectkey # Bucket name to be changed
         )
     except Exception:
         s3objectkey = unquote_plus("Index.html", encoding="utf-8")
         s3object = s3client.get_object(
-            Bucket="csc-ca2-static-ger", Key=s3objectkey
+            Bucket="csc-assignment-2-static-test2", Key=s3objectkey # Bucket name to be changed
         )
     print(s3object)
     response = {
