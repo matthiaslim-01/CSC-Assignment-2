@@ -40,22 +40,39 @@ def get_session_username(session):
     )
     username = db_result.get("Item", {}).get("userID", {}).get("S", None)
     return username
-
-
-def get_subscription_plan(username):
+        
+def get_user_info(username):
     db = init_client()
     db_result = db.get_item(
         TableName="user-info-dev",
         Key={"userID": {"S": username}},
-        ProjectionExpression="subscriptionType",
+    )
+    user_id = (
+        db_result.get("Item", {}).get("userID", {}).get("S", None)
+    )
+    customer_id = (
+        db_result.get("Item", {}).get("customerID", {}).get("S", None)
+    )
+    last_payment = (
+        db_result.get("Item", {}).get("lastPayment", {}).get("S", None)
     )
     subscription_type = (
         db_result.get("Item", {}).get("subscriptionType", {}).get("S", "Free")
     )
-    return subscription_type == "Paid"
+
+    if user_id is None:
+        return None
+    else:
+        return {
+            "userID": user_id,
+            "customerID": customer_id,
+            "last_payment": last_payment,
+            "subscription_type": subscription_type,
+        }
 
 
-def put_item(username, subscription_plan, last_payment, session):
+
+def create_or_update_user_info(username, customerID, subscription_plan, last_payment):
     db = init_client()
     db.put_item(
         TableName="user-info-dev",
@@ -63,7 +80,7 @@ def put_item(username, subscription_plan, last_payment, session):
             "userID": {"S": username},
             "subscriptionPlan": {"S": subscription_plan},
             "lastPaid": {"S": last_payment},
-            "sessionData": {"S": session},
+            "customerID": {"S": customerID},
         },
     )
 

@@ -5,7 +5,7 @@ import json
 import os
 import boto3
 from lib.webexception import WebException
-from lib.services.dynamodb_service import delete_item, put_item
+from lib.services.dynamodb_service import delete_item, create_or_update_user_info
 from http import HTTPStatus
 from datetime import datetime
 
@@ -108,7 +108,7 @@ def webhook_received(request, response):
         username = request_data["username"]
         subscription_plan = request_data["subscription"]
         session = request_data["id"]
-        put_item(username, subscription_plan, lastPayment, session)
+        create_or_update_user_info(username, session, subscription_plan, lastPayment)
         print(response)
         print("Payment succeeded!")
 
@@ -119,7 +119,7 @@ def webhook_received(request, response):
         ## Retrieve username from rds/dynamodb using customerID
         subscription_plan = request_data["subscription"]
         session = request_data["id"]
-        put_item(username, subscription_plan, lastPayment, session)
+        create_or_update_user_info(username, session,subscription_plan, lastPayment)
         print(response)
         print("Payment succeeded!")
 

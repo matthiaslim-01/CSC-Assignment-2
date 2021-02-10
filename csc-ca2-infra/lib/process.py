@@ -13,7 +13,7 @@ from lib.controllers.payments_controller import (
     get_publishable_key,
     webhook_received,
 )
-from lib.services.dynamodb_service import get_session_username, get_subscription_plan
+from lib.services.dynamodb_service import get_session_username, get_user_info
 from lib.controllers.comment_management_controller import get_comments, create_comment
 
 # from lib.controllers.crud_controller import uploadImage, updateTalent, deleteTalent
@@ -83,13 +83,21 @@ class Request:
         else:
             self.session_token = session_cookie.value
 
-        if self.endpoint in []:
+        if self.endpoint in ["create-checkout-session","get-publishable-key","customer-portal","create-comment","checkout-session"]:
+            print("Logged In Method Invoked")
             self.username = get_session_username(self.session_token)
+            print(self.username)
             if not self.username:
                 raise WebException(
                     status_code=HTTPStatus.UNAUTHORIZED, message="Unauthenticated User"
                 )
-            self.paiduser = get_subscription_plan(self.username)
+            user_info = get_user_info(self.username)
+            if user_info is None:
+                self.paiduser = False
+            else:
+                self.paiduser = True if user_info["subscriptionType"] == "Paid" else False
+            print(self.paiduser)
+
 
         return self
 

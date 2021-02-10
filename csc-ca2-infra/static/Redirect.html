@@ -66,12 +66,18 @@
                     return response.json();
                 })
                 .then((json) => { return json.data })
-                .then(function (session) {
-                    console.log("Login Successful!")
+                .then(function (data) {
+                    console.log(data)
+                    if(data.new_user){
+                        window.location.href = "/dev/Checkout.html"
+                    }else{
+                        window.location.href = "/dev/Index.html"
+                    }
                 })
                 .catch(function (e) {
                     console.log("Error", e);
                 });
+        
     </script>
 </body>
 

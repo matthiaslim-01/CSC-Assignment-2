@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from lib.services.oauth_service import exchange_token
 from botocore.utils import _parse_timestamp_with_tzinfo
-from lib.services.dynamodb_service import store_session, remove_session
+from lib.services.dynamodb_service import get_user_info, store_session, remove_session
 from uuid import uuid4
 from lib.webexception import WebException
 import jwt
@@ -22,6 +22,13 @@ def oauth_redirect(request, response):
         user_id = id_token["email"]
         sessionToken = str(uuid4())
         store_session(sessionToken, user_id)
+        user_info = get_user_info(user_id)
+
+        new_user = False
+        if user_info is None:
+            new_user = True
+
+        response.body = {"new_user": new_user}
         response.set_session(sessionToken)
     else:
         raise WebException(
