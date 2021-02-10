@@ -65,7 +65,7 @@ $("#submitTalent").click((e) => {
         formData.append("talentBio", talentBio);
 
         $.ajax({
-            url: "https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/api/uploadImage", // Change to own endpoint
+            url: "https://ab4z15tt79.execute-api.us-east-1.amazonaws.com/dev/api/uploadImage", // Change to own endpoint
             method: "POST",
             processData: false,
             contentType: false,
@@ -88,10 +88,10 @@ $('#search').keyup(function () {
     //var urlForJson = "data.json";
 
     //get data from Restful web Service in development environment
-    var urlForJson = "https://vytealar0d.execute-api.us-east-1.amazonaws.com/dev/api/getAllTalents"; // Change to own endpoint
+    var urlForJson = "data.json"; // Change to own endpoint
 
     //Url for the Cloud image hosting
-    var urlForCloudImage = "https://csc-assignment-photo-bucket-teh.s3.amazonaws.com/"; // Change to own bucket name
+    var urlForCloudImage = "http://res.cloudinary.com/doh5kivfn/image/upload/v1460006156/talents/"; // Change to own bucket name
 
     var searchField = $('#search').val();
     var myExp = new RegExp(searchField, "i");
