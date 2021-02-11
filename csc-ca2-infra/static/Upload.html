@@ -51,7 +51,9 @@
                 <form>
                     <div class="mb-3">
                         <label for="formFile" class="form-label">Choose Image</label>
-                        <input class="form-control" type="file" id="formFile" accept="image/jpeg, image/png">
+                        <input class="form-control" type="file" id="formFile" onchange="getBase64Image(this)" accept="image/jpeg, image/png"> 
+                        <img id="preview"></img> 
+                    </div> 
                     </div>
                     <div class="mb-3">
                         <label for="formFile" class="form-label">Enter Name: </label>

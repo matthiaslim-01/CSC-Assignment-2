@@ -49,38 +49,87 @@ manageBillBtn.addEventListener('click', function (e) {
         });
 });
 
-// UPLOAD Method
-$("#submitTalent").click((e) => {
-    e.preventDefault();
-
-    let fileList = $("#formFile")[0].files;
-    let file = fileList[0];
-    let talentName = $("#formName")
-    let talentBio = $("#formBio")
-    let $result = $("#result")
-    if (file !== undefined || talentName !== undefined || talentBio !== undefined) {
-        let formData = new FormData();
-        formData.append("photo", file);
+$("#submitTalent").click((e) => { 
+    e.preventDefault(); 
+ 
+    var file = document.getElementById('formFile').files[0] + ''; 
+    var str64 = file.split(','); 
+    // console.log(str64)[1]; 
+    var talentName = document.getElementById("formName").value; 
+    var talentBio = document.getElementById("formBio").value; 
+    let $result = $("#result"); 
+    if (str64 !== undefined || talentName !== undefined || talentBio !== undefined) { 
+        let formData = new FormData(); 
+        formData.append("photo", str64);
         formData.append("talentName", talentName);
         formData.append("talentBio", talentBio);
+        // var object = {}; 
+        // for (var value of formData.values()) { 
+        //     console.log(value); 
+        // } 
+ 
+        var jsonForm = JSON.stringify(Object.fromEntries(formData)); 
+        console.log("jsonForm: " + jsonForm); 
+        // fetch('/dev/api/uploadImage', { 
+        //     method: 'POST', 
+        //     headers: { 
+        //         'Content-Type': 'application/json' 
+        //     }, 
+        //     credentials: "include", 
+        //     body: JSON.stringify({ 
+        //         talentName: talentName, 
+        //         talentBio: talentBio, 
+        //         file: base64File 
+        //     }), 
+        //     }) 
+        //     .then((response) => response.json()) 
+        //     .then((json) => { return json.data }) 
+        //     .then((data) => { 
+        //         console.log(data); 
+        //         $result.text("Talent successfully created."); 
+        //     }) 
+        //     .catch((error) => { 
+        //         console.error('Error:', error); 
+        // }); 
+        $.ajax({ 
+            url: "https://1lwasg3h0j.execute-api.us-east-1.amazonaws.com/dev/api/uploadImage", // Change to own endpoint 
+            method: "POST", 
+            processData: false, 
+            contentType: false, 
+            data: jsonForm 
+        }).done((data) => { 
+            console.log(data); 
+            $result.text("Talent successfully created."); 
+        }).fail((data) => { 
+            console.log(data); 
+            $result.text(data.responseJSON.Message); 
+        }); 
+    } else { 
+        $result.text("Check your inputs."); 
+    } 
+}); 
 
-        $.ajax({
-            url: "https://ab4z15tt79.execute-api.us-east-1.amazonaws.com/dev/api/uploadImage", // Change to own endpoint
-            method: "POST",
-            processData: false,
-            contentType: false,
-            data: formData
-        }).done((data) => {
-            console.log(data)
-            $result.text("Talent successfully created.");
-        }).fail((data) => {
-            console.log(data)
-            $result.text(data.responseJSON.Message)
-        })
-    } else {
-        $result.text("Check your inputs.")
-    }
-});
+function getBase64Image(element) { 
+    // var preview = document.getElementById('preview'); 
+    // var file = document.getElementById('formFile').files[0]; 
+    // var reader = new FileReader(); 
+    // let str; 
+    // console.log(file); 
+    // reader.addEventListener("load", function () { // Setting up base64 URL on image 
+    //     preview.src = reader.result; 
+    //     str = reader.result; 
+    //     console.log(reader.result); 
+    // }, false); 
+    var file = element.files[0]; 
+    var reader = new FileReader(); 
+    reader.onloadend = function () { 
+        console.log('RESULT', reader.result) 
+    } 
+    reader.readAsDataURL(file); 
+    // console.log(str); 
+    // var str64 = str.split(','); 
+    // console.log(str64); 
+} 
 
 //SEARCH Method
 $('#search').keyup(function () {
