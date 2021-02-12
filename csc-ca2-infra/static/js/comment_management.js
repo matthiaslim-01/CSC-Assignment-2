@@ -79,7 +79,7 @@ $('#commentsContainer').comments({
 
         $.ajax({
             method: 'GET',
-            url: `https://2v4tslm6qk.execute-api.us-east-1.amazonaws.com/dev/api/get-comments?talentId=${$.urlParam('talentId')}&userId=${$.urlParam('userId')}`,
+            url: `https://2v4tslm6qk.execute-api.us-east-1.amazonaws.com/dev/api/get-comments?talentId=${$.urlParam('talentId')}&userId=${$.urlParam('userId')}&session=${session_token}`,
             dataType: 'json',
             async: true,
             cache: false
