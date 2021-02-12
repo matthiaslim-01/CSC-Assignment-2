@@ -4,7 +4,7 @@ from datetime import datetime
 from lib.webexception import WebException
 from http import HTTPStatus
 from lib.services.dynamodb_service import get_session_username
-from lib.services.rds_service import getResult, uploadToSql, insertComment
+from lib.services.rds_service import getResult, insertComment
 
 
 def get_talent_detail(request, response):
@@ -39,23 +39,23 @@ def get_comments(request, response):
         createdBy = ""
         createdByCurrentUser = True
 
-        getUserDetails = f"Select s.Subscription from users u, user_subscription s where u.Subscription = s.Id and u.Id = {data['userId']};"
+        getUserDetails = f"Select SubscriptionPlan from user_data where UserName = '{str(username)}';"
 
-        getCommentOfTalent = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, UserName from talent t, comment_management c, users u where c.TalentId = {data['talentId']} and c.TalentId = t.TalentId and u.Id = c.UserId;"
+        getCommentOfTalent = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, UserName from talent t, comment c, user_data u where c.TalentId = {data['talentId']} and c.TalentId = t.TalentId and u.Id = c.UserId;"
 
         userData = getResult(getUserDetails)
 
-        userDetail = userData[0]
+        oneUserDetail = userData[0]
 
         allCommentsResult = getResult(getCommentOfTalent)
 
         for oneComment in allCommentsResult:
             if not oneComment["ParentId"] is None:
-                if oneComment["UserId"] == int(data["userId"]):
+                if str(oneComment["UserName"]) in str(username):
                     createdBy = "You"
                     createdByCurrentUser = True
                 else:
-                    createdBy = oneComment["UserName"]
+                    createdBy = str(oneComment["UserName"])
                     createdByCurrentUser = False
 
                 commentDict = {
@@ -71,7 +71,7 @@ def get_comments(request, response):
                 commentList.append(commentDict)
 
             else:
-                if oneComment["UserId"] == int(data["userId"]):
+                if str(oneComment["UserName"]) in str(username):
                     createdBy = "You"
                     createdByCurrentUser = True
 
@@ -93,8 +93,7 @@ def get_comments(request, response):
 
         response.body = {
             "commentResult": commentList,
-            "Subscription": userDetail["Subscription"],
-            "Username": username,
+            "SubscriptionPlan": oneUserDetail["SubscriptionPlan"],
         }
         return response
 
@@ -108,10 +107,16 @@ def create_comment(request, response):
     count = 0
     paId = ""
 
+    username = get_session_username(data["session"])
+
     try:
-        insert_comment_query = "Insert into comment_management (UserId, TalentId, Comment, ParentId, CreatedAt, UpdatedAt) Values (%s, %s, %s, %s, %s, %s);"
+        getUserDetails = f"Select * from user_data where UserName = '{str(username)}';"
+        userData = getResult(getUserDetails)
+
+        oneUserDetail = userData[0]
+        insert_comment_query = "Insert into comment (UserId, TalentId, Comment, ParentId, CreatedAt, UpdatedAt) Values (%s, %s, %s, %s, %s, %s);"
         getNewCommentId = "Select LAST_INSERT_ID();"
-        userId = int(data["userId"])
+        userId = oneUserDetail["Id"]
         comment = data["content"]
         createdAt = now.strftime("%Y-%m-%d %H:%M:%S")
         updatedAt = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -132,7 +137,7 @@ def create_comment(request, response):
 
         if count == 1:
 
-            get_new_comment_query = f"Select CommentId, c.UserId, Comment, ParentId, c.CreatedAt, c.UpdatedAt, UrlLink, Name, Bio, FullName, us.Subscription from talent t, comment_management c, users u, user_subscription us where c.TalentId = {data['talentId']} and CommentId = {id[0]} and c.TalentId = t.TalentId and u.Id = c.UserId and u.Subscription = us.Id;"
+            get_new_comment_query = f"Select CommentId, UserId, Comment, ParentId, CreatedAt, UpdatedAt, UserName from comment c, user_data u where c.TalentId = {data['talentId']} and CommentId = {id[0]} and u.Id = c.UserId;"
 
             comment_result = getResult(get_new_comment_query)
 
@@ -143,11 +148,11 @@ def create_comment(request, response):
                 paId = int(oneResult["ParentId"])
             createdBy = ""
             createdByCurrentUser = True
-            if int(oneResult["UserId"]) == int(data["userId"]):
+            if oneResult["UserName"] == str(username):
                 createdBy = "You"
                 createdByCurrentUser = True
             else:
-                createdBy = oneResult["FullName"]
+                createdBy = oneResult["UserName"]
                 createdByCurrentUser = False
 
             commentDict = {

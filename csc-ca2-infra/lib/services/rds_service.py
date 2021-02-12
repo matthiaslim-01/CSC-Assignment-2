@@ -2,6 +2,7 @@ import pymysql
 import logging
 from lib.webexception import WebException
 import os
+import datetime
 
 
 def init_client():
@@ -30,6 +31,7 @@ def insertUserData(username, customerID, subscription_plan, last_payment):
             insert_stmt, (username, customerID, subscription_plan, last_payment)
         )
         connection.commit()
+        cur.close()
         logging.info("insertUserData -- Insert query executed.")
 
     except WebException as e:
@@ -38,6 +40,29 @@ def insertUserData(username, customerID, subscription_plan, last_payment):
 
     finally:
         logging.info("insertUserData -- Closing mySql connection")
+        connection.close()
+
+    return True
+
+
+def updateUserData(username, customerID, subscription_plan, last_payment):
+    connection = init_client()
+    logging.info("updateUserData -- Connection to mySql server successful!")
+
+    try:
+        update_stmt = f"UPDATE user_data SET SubscriptionPlan = '{str(subscription_plan)}', LastPayment = '{str(last_payment)}' where UserName = '{str(username)}'"
+        cur = connection.cursor()
+        cur.execute(update_stmt)
+        connection.commit()
+        cur.close()
+        logging.info("updateUserData -- Update query executed.")
+
+    except WebException as e:
+        logging.error(e)
+        return False
+
+    finally:
+        logging.info("updateUserData -- Closing mySql connection")
         connection.close()
 
     return True

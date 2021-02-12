@@ -11,6 +11,7 @@ from lib.services.dynamodb_service import (
     get_customer_id,
     get_username_from_customerid,
 )
+from lib.services.rds_service import insertUserData, updateUserData
 from http import HTTPStatus
 from datetime import datetime
 
@@ -46,6 +47,8 @@ def get_checkout_session(request, response):
         subscription = "Paid"
 
     create_or_update_user_info(request.username, customerId, subscription, lastPayment)
+    mysql_lastpayment = now.strftime("%Y-%m-%d %H:%M:%S")
+    insertUserData(request.username, customerId, subscription, mysql_lastpayment)
     response.body = checkout_info
     return response
 
@@ -154,6 +157,8 @@ def webhook_received(request, response):
         create_or_update_user_info(
             username, customer_id, subscription_plan, lastPayment
         )
+        mysql_lastPayment = now.strftime("%Y-%m-%d %H:%M:%S")
+        updateUserData(username, subscription_plan, mysql_lastPayment)
         print("Payment updated!")
 
     if event_type == "customer.subscription.deleted":

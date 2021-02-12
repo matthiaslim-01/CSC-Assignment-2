@@ -79,7 +79,7 @@ $('#commentsContainer').comments({
 
         $.ajax({
             method: 'GET',
-            url: `https://2v4tslm6qk.execute-api.us-east-1.amazonaws.com/dev/api/get-comments?talentId=${$.urlParam('talentId')}&userId=${$.urlParam('userId')}&session=${session_token}`,
+            url: `https://2v4tslm6qk.execute-api.us-east-1.amazonaws.com/dev/api/get-comments?talentId=${$.urlParam('talentId')}&session=${session_token[0]}`,
             dataType: 'json',
             async: true,
             cache: false
@@ -88,9 +88,7 @@ $('#commentsContainer').comments({
 
             success(data.data.commentResult);
 
-            commentData = data.data.commentResult;
-
-            userData = data.data.Subscription;
+            userData = data.data.SubscriptionPlan;
 
             if (userData === "Paid") {
                 $('#commentsContainer .textarea-wrapper .textarea').attr('contentEditable', 'true');
@@ -107,7 +105,7 @@ $('#commentsContainer').comments({
     },
     postComment: function (commentJSON, success, error) {
 
-        commentJSON["userId"] = $.urlParam('userId')
+        commentJSON["session"] = session_token[0]
         commentJSON["talentId"] = $.urlParam('talentId')
 
         $.ajax({
